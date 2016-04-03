@@ -49,6 +49,26 @@
                 </dependency>
             </module-dependencies>
             <public-packages/>
+            <class-path-extension>
+                <runtime-relative-path>ext/websocket-client-9.3.8.v20160314.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/websocket-client-9.3.8.v20160314.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/websocket-api-9.3.8.v20160314.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/websocket-api-9.3.8.v20160314.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/websocket-common-9.3.8.v20160314.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/websocket-common-9.3.8.v20160314.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jetty-util-9.3.8.v20160314.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jetty-util-9.3.8.v20160314.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jetty-io-9.3.8.v20160314.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jetty-io-9.3.8.v20160314.jar</binary-origin>
+            </class-path-extension>
         </data>
     </configuration>
 </project>
