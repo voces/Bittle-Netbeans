@@ -17,7 +17,9 @@ import org.openide.util.Lookup;
         categoryName = "#OptionsCategory_Name_Bittle",
         iconBase = "org/bittle/beansmod/bittle32.png",
         keywords = "#OptionsCategory_Keywords_Bittle",
-        keywordsCategory = "Bittle"
+        keywordsCategory = "Bittle",
+        id = "BittleOptions",
+        position = 0
 )
 @org.openide.util.NbBundle.Messages({"OptionsCategory_Name_Bittle=Bittle", "OptionsCategory_Keywords_Bittle=Bittle, log in, register, sync, lol, idk"})
 public final class BittleOptionsPanelController extends OptionsPanelController {

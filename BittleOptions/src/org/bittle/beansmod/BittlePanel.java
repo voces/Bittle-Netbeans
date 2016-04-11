@@ -8,24 +8,26 @@ package org.bittle.beansmod;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import org.openide.util.NbPreferences;
+import org.openide.windows.WindowManager;
 
 final class BittlePanel extends javax.swing.JPanel {
 
     private final BittleOptionsPanelController controller;
+    private final BittleTreeTopComponent fileTree; 
     private final Connection connection;
     private final String serverName = "wss://notextures.io:8086";
     
     private String username = "";
     private String password = "";
-    private String rootpath;
+    private String rootpath = System.getProperty("user.home");
     private Boolean LoggedIn = false;
 
     BittlePanel(BittleOptionsPanelController controller, Connection connection) {
         this.controller = controller;
         this.connection = connection;
+        this.fileTree = (BittleTreeTopComponent) WindowManager.getDefault().findTopComponent("BittleTree");
         
-        rootpath = System.getProperty("user.home");
-        
+        store();
         initComponents();
         
         LogInPanel.setVisible(true);
@@ -94,36 +96,33 @@ final class BittlePanel extends javax.swing.JPanel {
         LogInPanel.setLayout(LogInPanelLayout);
         LogInPanelLayout.setHorizontalGroup(
             LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, LogInPanelLayout.createSequentialGroup()
-                .addContainerGap(27, Short.MAX_VALUE)
+            .addGroup(LogInPanelLayout.createSequentialGroup()
+                .addGap(60, 60, 60)
                 .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(LoginLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 287, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(LogInPanelLayout.createSequentialGroup()
+                        .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(UsernameLabel)
+                            .addComponent(PasswordLabel))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(PasswordField, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(UsernameField, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(LoginButton)))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, LogInPanelLayout.createSequentialGroup()
                         .addComponent(RegisterCheckbox)
-                        .addGap(155, 155, 155))
-                    .addGroup(LogInPanelLayout.createSequentialGroup()
-                        .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(LogInPanelLayout.createSequentialGroup()
-                                .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(UsernameLabel)
-                                    .addComponent(PasswordLabel))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(LoginButton)
-                                    .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                        .addComponent(UsernameField, javax.swing.GroupLayout.DEFAULT_SIZE, 195, Short.MAX_VALUE)
-                                        .addComponent(PasswordField))))
-                            .addComponent(LoginLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 295, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(43, 43, 43))))
+                        .addGap(112, 112, 112)))
+                .addContainerGap(61, Short.MAX_VALUE))
         );
         LogInPanelLayout.setVerticalGroup(
             LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(LogInPanelLayout.createSequentialGroup()
-                .addGap(18, 18, 18)
-                .addComponent(LoginLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 88, Short.MAX_VALUE)
+                .addContainerGap()
+                .addComponent(LoginLabel)
                 .addGap(18, 18, 18)
                 .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(UsernameLabel)
-                    .addComponent(UsernameField, javax.swing.GroupLayout.DEFAULT_SIZE, 32, Short.MAX_VALUE))
+                    .addComponent(UsernameField, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(UsernameLabel))
                 .addGap(18, 18, 18)
                 .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(PasswordLabel)
@@ -132,7 +131,7 @@ final class BittlePanel extends javax.swing.JPanel {
                 .addComponent(LoginButton)
                 .addGap(18, 18, 18)
                 .addComponent(RegisterCheckbox)
-                .addGap(83, 83, 83))
+                .addContainerGap(109, Short.MAX_VALUE))
         );
 
         LoggedInPanel.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
@@ -177,22 +176,24 @@ final class BittlePanel extends javax.swing.JPanel {
                 .addGroup(LoggedInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(LoggedInPanelLayout.createSequentialGroup()
                         .addGroup(LoggedInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(BrowseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 117, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(LoggedInPanelLayout.createSequentialGroup()
                                 .addGap(11, 11, 11)
                                 .addGroup(LoggedInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(CurrentDirectoryField, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(CurrentDirectoryLabel, javax.swing.GroupLayout.Alignment.TRAILING))))
-                        .addGap(29, 29, 29)
+                                    .addComponent(CurrentDirectoryLabel, javax.swing.GroupLayout.Alignment.TRAILING)))
+                            .addGroup(LoggedInPanelLayout.createSequentialGroup()
+                                .addGap(26, 26, 26)
+                                .addComponent(BrowseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 117, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(62, 62, 62)
                         .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(LoggedInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(DoneLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(LogOutButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGap(59, 59, 59))
-                    .addGroup(LoggedInPanelLayout.createSequentialGroup()
-                        .addComponent(LoggedInLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addContainerGap())))
+                            .addGroup(LoggedInPanelLayout.createSequentialGroup()
+                                .addGap(17, 17, 17)
+                                .addComponent(LogOutButton, javax.swing.GroupLayout.PREFERRED_SIZE, 97, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(LoggedInLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
         LoggedInPanelLayout.setVerticalGroup(
             LoggedInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -207,14 +208,14 @@ final class BittlePanel extends javax.swing.JPanel {
                             .addGroup(LoggedInPanelLayout.createSequentialGroup()
                                 .addComponent(CurrentDirectoryLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 53, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(18, 18, 18)
-                                .addComponent(CurrentDirectoryField, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(BrowseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(CurrentDirectoryField, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(LoggedInPanelLayout.createSequentialGroup()
                                 .addComponent(DoneLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 53, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(18, 18, 18)
-                                .addComponent(LogOutButton, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 115, Short.MAX_VALUE)))
+                                .addComponent(LogOutButton)))
+                        .addGap(30, 30, 30)
+                        .addComponent(BrowseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 103, Short.MAX_VALUE)))
                 .addContainerGap())
         );
 
@@ -270,7 +271,9 @@ final class BittlePanel extends javax.swing.JPanel {
             rootpath = fileChooser.getSelectedFile().toString();
             CurrentDirectoryField.setText(rootpath);
         }
-        controller.applyChanges();
+        store();
+        fileTree.updateScreen();
+        fileTree.open();
     }//GEN-LAST:event_BrowseButtonActionPerformed
 
     private void RegisterCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RegisterCheckboxActionPerformed
@@ -287,8 +290,6 @@ final class BittlePanel extends javax.swing.JPanel {
     private void LoginButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LoginButtonActionPerformed
         if(!validLogin())
             return;
-        else
-            controller.applyChanges();
         
         username = UsernameField.getText();
         password = PasswordField.getText();
@@ -305,11 +306,12 @@ final class BittlePanel extends javax.swing.JPanel {
             JOptionPane.showMessageDialog(LogInPanel, "Welcome Back, " + username , "Welcome To Bittle!!!", JOptionPane.PLAIN_MESSAGE);
         }
         LoggedIn = true;
-        controller.applyChanges();
+        store();
         LogInPanel.setVisible(false);
         LoggedInLabel.setText("Hey There, " + username);
         CurrentDirectoryField.setText(rootpath);
         LoggedInPanel.setVisible(true);
+        fileTree.updateScreen();
     }//GEN-LAST:event_LoginButtonActionPerformed
 
     private void LogOutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LogOutButtonActionPerformed
@@ -318,12 +320,12 @@ final class BittlePanel extends javax.swing.JPanel {
         LoggedIn = false;
         username = "";
         password = "";
-        rootpath = "";
-        controller.applyChanges();
+        rootpath = System.getProperty("user.home");
+        store();
+        load();
         LoggedInPanel.setVisible(false);
-        controller.update();
         LogInPanel.setVisible(true);
-        
+        fileTree.updateScreen();
     }//GEN-LAST:event_LogOutButtonActionPerformed
 
     void load() {
