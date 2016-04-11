@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.bittle.optons;
+package org.bittle.beansmod;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -13,18 +13,20 @@ import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 
-@OptionsPanelController.SubRegistration(
-        location = "BittleOptionsMain",
-        displayName = "#AdvancedOption_DisplayName_BittleAccount",
-        keywords = "#AdvancedOption_Keywords_BittleAccount",
-        keywordsCategory = "Java/BittleAccount"
+@OptionsPanelController.TopLevelRegistration(
+        categoryName = "#OptionsCategory_Name_Bittle",
+        iconBase = "org/bittle/beansmod/bittle32.png",
+        keywords = "#OptionsCategory_Keywords_Bittle",
+        keywordsCategory = "Bittle"
 )
-@org.openide.util.NbBundle.Messages({"AdvancedOption_DisplayName_BittleAccount=Account", "AdvancedOption_Keywords_BittleAccount=bittle, bittle account, bittle login, bittle sign in, login, sign in, sign up, sync"})
-public final class BittleAccountOptionsPanelController extends OptionsPanelController {
+@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_Bittle=Bittle", "OptionsCategory_Keywords_Bittle=Bittle, log in, register, sync, lol, idk"})
+public final class BittleOptionsPanelController extends OptionsPanelController {
 
-    private BittleAccountPanel panel;
+    private BittlePanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+    Connection connection = new Connection();
     private boolean changed;
+    private String rootpath;
 
     public void update() {
         getPanel().load();
@@ -35,7 +37,7 @@ public final class BittleAccountOptionsPanelController extends OptionsPanelContr
         SwingUtilities.invokeLater(() -> {
                 getPanel().store();
                 changed = false;
-        });
+            });
     }
 
     public void cancel() {
@@ -65,10 +67,20 @@ public final class BittleAccountOptionsPanelController extends OptionsPanelContr
     public void removePropertyChangeListener(PropertyChangeListener l) {
         pcs.removePropertyChangeListener(l);
     }
+    
+    public String getRoot(){
+        return this.rootpath;
+    }
+    
+    public void setRoot(String newRoot){
+        String oldRoot = this.rootpath;
+        this.rootpath = newRoot;
+        pcs.firePropertyChange("root", oldRoot, newRoot);
+    }
 
-    private BittleAccountPanel getPanel() {
+    private BittlePanel getPanel() {
         if (panel == null) {
-            panel = new BittleAccountPanel(this);
+            panel = new BittlePanel(this, this.connection);
         }
         return panel;
     }

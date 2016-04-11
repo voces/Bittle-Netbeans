@@ -1,4 +1,4 @@
-package org.bittle.options;
+package org.bittle.beansmod;
 
 import java.net.URI;
 import java.util.concurrent.Future;
