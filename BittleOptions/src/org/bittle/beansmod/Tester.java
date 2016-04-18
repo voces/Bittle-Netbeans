@@ -1,7 +1,5 @@
 package org.bittle.beansmod;
 
-import org.bittle.beansmod.Connection;
-
 public class Tester {
     
     
