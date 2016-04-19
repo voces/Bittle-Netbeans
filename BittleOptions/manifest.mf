@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 AutoUpdate-Show-In-Client: true
 OpenIDE-Module: org.bittle.beansmod
+OpenIDE-Module-Install: org/bittle/installer/Installer.class
 OpenIDE-Module-Localizing-Bundle: org/bittle/beansmod/Bundle.properties
 OpenIDE-Module-Specification-Version: 1.0
-OpenIDE-Module-Install: org/netbeans/modules/editor/EditorModule.class

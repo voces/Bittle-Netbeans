@@ -1,4 +1,4 @@
-package org.bittle.beansmod;
+package org.bittle.installer;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -10,6 +10,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 import org.netbeans.api.editor.EditorRegistry;
+//import org.netbeans.modules.editor.EditorModule;
 import org.openide.windows.WindowManager;
 
 public class Installer extends org.openide.modules.ModuleInstall implements Runnable {
@@ -32,6 +33,8 @@ public class Installer extends org.openide.modules.ModuleInstall implements Runn
                 d.addDocumentListener( new DocumentListener() {
                     public void changedUpdate( DocumentEvent e )
                     {
+                        System.out.println( "changedUpdate: Added " + e.getLength() + 
+                          " characters, document length = " + e.getDocument().getLength() );
                     }
 
                     public void insertUpdate( DocumentEvent e )
