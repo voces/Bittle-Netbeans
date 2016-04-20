@@ -5,8 +5,17 @@
  */
 package org.bittle.beansmod;
 
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import static java.nio.file.StandardCopyOption.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import org.openide.util.Exceptions;
 import org.openide.util.NbPreferences;
 import org.openide.windows.WindowManager;
 
@@ -267,13 +276,16 @@ final class BittlePanel extends javax.swing.JPanel {
 
         int choice = fileChooser.showOpenDialog(null);
         if(choice == JFileChooser.APPROVE_OPTION){
-            controller.changed();
-            rootpath = fileChooser.getSelectedFile().toString();
+            String newPath = fileChooser.getSelectedFile().toString();
+            try {
+                createBittleDirectory(newPath, true);
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+            }
             CurrentDirectoryField.setText(rootpath);
         }
         store();
         fileTree.updateScreen();
-        fileTree.open();
     }//GEN-LAST:event_BrowseButtonActionPerformed
 
     private void RegisterCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RegisterCheckboxActionPerformed
@@ -306,6 +318,13 @@ final class BittlePanel extends javax.swing.JPanel {
             JOptionPane.showMessageDialog(LogInPanel, "Welcome Back, " + username , "Welcome To Bittle!!!", JOptionPane.PLAIN_MESSAGE);
         }
         LoggedIn = true;
+        
+        try {
+            createBittleDirectory(rootpath, false);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        
         store();
         LogInPanel.setVisible(false);
         LoggedInLabel.setText("Hey There, " + username);
@@ -315,14 +334,16 @@ final class BittlePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_LoginButtonActionPerformed
 
     private void LogOutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LogOutButtonActionPerformed
-        // TODO add logout code here
-        connection.logout();
-        LoggedIn = false;
+        // TODO: add proper logout code here
+        
+        connection.logout();     // Let the server know we are logging out
+        LoggedIn = false;        // Set the log in info to the defaults
         username = "";
         password = "";
-        rootpath = System.getProperty("user.home");
         store();
-        load();
+        load(); 
+        
+        // Update the login screen and file tree
         LoggedInPanel.setVisible(false);
         LogInPanel.setVisible(true);
         fileTree.updateScreen();
@@ -366,11 +387,77 @@ final class BittlePanel extends javax.swing.JPanel {
     private javax.swing.JSeparator jSeparator1;
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * Checks that the user's input is not blank
+     * Should probably do more than just check that
+     * @return false if the user's input was blank, true otherwise
+     */
     private boolean validLogin() {
         if("".equals(PasswordField.getText()) || "".equals(UsernameField.getText())){
             JOptionPane.showMessageDialog(LogInPanel, "Username or Password cannot be blank!", "Error!", JOptionPane.ERROR_MESSAGE);
             return false;
         }
         return true;
+    }
+    
+    /**
+     * Creates a new directory for Bittle files
+     * @param newPath - the folder where the Bittle directory will be created
+     * @param moveFiles - lets the program know the to move the Bittle directory
+     * @throws IOException 
+     */
+    private void createBittleDirectory(String newPath, boolean moveFiles) throws IOException{
+        
+        // Check the path you are trying to create
+        
+        // LOGIC FLAW HERE
+        // NEED BETTER WAY TO HANDLE DUMB USERS
+        // IF THE NEW PATH IS ALREADY A BITTLE FOLDER, DO NOTHING
+        // DON'T DELETE THE FOLDER IF THIS IS TRUW
+        // LOGIC NEEDS TO BE REWORKED
+        String lastFolder = newPath.substring(newPath.lastIndexOf("\\"));
+        if(!lastFolder.equals("\\Bittle"))
+            newPath = newPath + "\\Bittle";
+        
+        
+        Path newBittleFolder = Paths.get(newPath);
+            
+        // If the Bittle folder does not exist
+        if(!Files.exists(newBittleFolder)){
+            
+            // Attempt to create it
+            try {
+                Files.createDirectories(newBittleFolder);
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+                }
+        }
+        
+        // If this flag is true, we need to migrate the bittle folder
+        if(moveFiles){
+            
+            // Get the path of the previous Bittle folder
+            Path oldBittleFolder = Paths.get(rootpath);
+            
+            // Visit all the files in the Bittle Folder
+            Files.walkFileTree(oldBittleFolder, new SimpleFileVisitor<Path>()
+                {
+                    // When a file is encountered, move it to the new path
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException
+                    {
+                        Files.move(file, newBittleFolder.resolve(oldBittleFolder.relativize(file)), ATOMIC_MOVE);
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+            
+            // Delete the old bittle folder
+            if(!rootpath.equals(newPath))
+                Files.delete(oldBittleFolder);
+        }
+        
+        // Update the root path with the new Bittle folder path
+        rootpath = newPath;
+        
     }
 }
