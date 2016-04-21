@@ -5,14 +5,13 @@
  */
 package org.bittle.beansmod;
 
+import java.util.List;
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
+import java.nio.file.*;
 import static java.nio.file.StandardCopyOption.*;
+import static java.nio.file.StandardOpenOption.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import org.openide.util.Exceptions;
@@ -28,7 +27,7 @@ final class BittlePanel extends javax.swing.JPanel {
     
     private String username = "";
     private String password = "";
-    private String rootpath = System.getProperty("user.home");
+    private String rootpath = System.getProperty("user.home") + "\\Bittle";
     private Boolean LoggedIn = false;
 
     BittlePanel(BittleOptionsPanelController controller, Connection connection) {
@@ -269,30 +268,41 @@ final class BittlePanel extends javax.swing.JPanel {
             .addComponent(OptionsLayeredPane)
         );
     }// </editor-fold>//GEN-END:initComponents
-
+  
     private void BrowseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BrowseButtonActionPerformed
+        
+        // Create a Java file chooser for folders
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
+        // Show the file chooser
         int choice = fileChooser.showOpenDialog(null);
+        
+        // If the user selected a folder
         if(choice == JFileChooser.APPROVE_OPTION){
-            String newPath = fileChooser.getSelectedFile().toString();
+            
+            // Try to create a Bittle folder in it
             try {
-                createBittleDirectory(newPath, true);
+                createBittleDirectory(fileChooser.getSelectedFile().toString(), true);
             } catch (IOException ex) {
                 Exceptions.printStackTrace(ex);
             }
-            CurrentDirectoryField.setText(rootpath);
+            
+            store();    // Stores the new rootpath
+            load();     // Shows the new rootpath in the text box
+            
+            // Update the tree to show the right folder
+            fileTree.updateScreen();
         }
-        store();
-        fileTree.updateScreen();
     }//GEN-LAST:event_BrowseButtonActionPerformed
 
     private void RegisterCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RegisterCheckboxActionPerformed
+        // If the checkbox is selected, show the register prompts
         if(RegisterCheckbox.isSelected()){
             LoginLabel.setText("Sign Up");
             LoginButton.setText("Sign Up");
         }
+        // Otherwise show the log in prompts
         else{
             LoginLabel.setText("Log In");
             LoginButton.setText("Log In");
@@ -300,35 +310,52 @@ final class BittlePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_RegisterCheckboxActionPerformed
 
     private void LoginButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LoginButtonActionPerformed
+        
+        // Do log in validation
+        // If log in was invalid, do nothing
         if(!validLogin())
             return;
         
+        // Update the username and password with the input
         username = UsernameField.getText();
         password = PasswordField.getText();
-        connection.connect(serverName);
+        //connection.connect(serverName);
         
+        // If the user wants to register, do that
         if(RegisterCheckbox.isSelected()){
             // TODO: Handle Register Code here
             connection.register(username, password);
             JOptionPane.showMessageDialog(LogInPanel, "Thanks for signing up, " + username , "Welcome To Bittle!!!", JOptionPane.PLAIN_MESSAGE);
         }
+        // Otherwise do the log in stuff
         else{
             // TODO: Check that the account actually exists in the database
             connection.login(username, password);
             JOptionPane.showMessageDialog(LogInPanel, "Welcome Back, " + username , "Welcome To Bittle!!!", JOptionPane.PLAIN_MESSAGE);
         }
+        
+        // Set the log in flag to true
         LoggedIn = true;
         
+        // Try to create the bittle directory
+        // If it already exists, rootpath will be updated
+        // NOTE: We need to find a way to store each user's preference for this
+        // - As it is now, the bittle folder is created in user's home folder
+        // - They have to reset it to thier desired path each time
+        // - Perhaps we could store their desired path in the server
+        // - We would use that instead of "rootpath" for the create call
         try {
             createBittleDirectory(rootpath, false);
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }
         
-        store();
+        store();    // Store the new information
+        
+        // Show the appropriate screens and text 
+        load();
         LogInPanel.setVisible(false);
         LoggedInLabel.setText("Hey There, " + username);
-        CurrentDirectoryField.setText(rootpath);
         LoggedInPanel.setVisible(true);
         fileTree.updateScreen();
     }//GEN-LAST:event_LoginButtonActionPerformed
@@ -341,7 +368,7 @@ final class BittlePanel extends javax.swing.JPanel {
         username = "";
         password = "";
         store();
-        load(); 
+        //load(); 
         
         // Update the login screen and file tree
         LoggedInPanel.setVisible(false);
@@ -404,60 +431,97 @@ final class BittlePanel extends javax.swing.JPanel {
      * Creates a new directory for Bittle files
      * @param newPath - the folder where the Bittle directory will be created
      * @param moveFiles - lets the program know the to move the Bittle directory
-     * @throws IOException 
      */
     private void createBittleDirectory(String newPath, boolean moveFiles) throws IOException{
         
-        // Check the path you are trying to create
-        
-        // LOGIC FLAW HERE
-        // NEED BETTER WAY TO HANDLE DUMB USERS
-        // IF THE NEW PATH IS ALREADY A BITTLE FOLDER, DO NOTHING
-        // DON'T DELETE THE FOLDER IF THIS IS TRUW
-        // LOGIC NEEDS TO BE REWORKED
-        String lastFolder = newPath.substring(newPath.lastIndexOf("\\"));
-        if(!lastFolder.equals("\\Bittle"))
+        if(!newPath.substring(newPath.lastIndexOf("\\")).equals("\\Bittle"))
             newPath = newPath + "\\Bittle";
         
-        
-        Path newBittleFolder = Paths.get(newPath);
+        // Create a path for the new folder
+        Path newFolder = Paths.get(newPath);
             
-        // If the Bittle folder does not exist
-        if(!Files.exists(newBittleFolder)){
+        // If the folder does not exist
+        if(!Files.exists(newFolder)){
             
             // Attempt to create it
             try {
-                Files.createDirectories(newBittleFolder);
+                Files.createDirectories(newFolder);
             } catch (IOException ex) {
                 Exceptions.printStackTrace(ex);
                 }
         }
         
-        // If this flag is true, we need to migrate the bittle folder
-        if(moveFiles){
-            
-            // Get the path of the previous Bittle folder
-            Path oldBittleFolder = Paths.get(rootpath);
-            
-            // Visit all the files in the Bittle Folder
-            Files.walkFileTree(oldBittleFolder, new SimpleFileVisitor<Path>()
-                {
-                    // When a file is encountered, move it to the new path
-                    @Override
-                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException
-                    {
-                        Files.move(file, newBittleFolder.resolve(oldBittleFolder.relativize(file)), ATOMIC_MOVE);
-                        return FileVisitResult.CONTINUE;
-                    }
-                });
-            
-            // Delete the old bittle folder
-            if(!rootpath.equals(newPath))
-                Files.delete(oldBittleFolder);
-        }
+        if(moveFiles && !rootpath.equals(newPath))
+                moveDirectories(rootpath, newPath);
         
-        // Update the root path with the new Bittle folder path
         rootpath = newPath;
+    }
+    
+    /**
+     * Moves the contents of one directory to another
+     * @param from - the path of the folder you are moving from
+     * @param to - the path of the folder you are moving to
+     * @throws IOException 
+     */
+    private void moveDirectories(String from, String to) throws IOException{
+    
+        // Get the path of the previous folder 
+        Path oldBittleFolder = Paths.get(from);
         
+        // Get the path of the new folder
+        Path newBittleFolder = Paths.get(to);
+            
+        // Visit all the files in the Bittle Folder
+        Files.walkFileTree(oldBittleFolder, new SimpleFileVisitor<Path>()
+        {
+            // When a file is encountered, move it to the new path
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException
+            {
+                Files.move(file, newBittleFolder.resolve(oldBittleFolder.relativize(file)), ATOMIC_MOVE);
+                return FileVisitResult.CONTINUE;
+            }
+        });
+        
+        // Delete the old bittle folder
+        Files.delete(oldBittleFolder);
+    }
+    
+    /**
+     * Converts a file at a given path into an array of strings
+     * @param filePath String - Where the file to be converted resides
+     * @return - An array of strings containing the lines in the file
+     */
+    private String[] deconstructFile(String filePath) throws IOException{
+        
+        // Get the path of the file to be deconstructed
+        Path file = Paths.get(filePath);
+        
+        // Read the lines of the file into a list
+        List<String> lines = Files.readAllLines(file);
+        
+        // Convert that list into an array
+        String[] linesArray = lines.toArray(new String[lines.size()]);
+        
+        return linesArray;
+    }
+    
+    /**
+     * Constructs a file from an array of Strings.
+     * If the file already exists, the array of Strings will be written to it.
+     * @param filename String - Name of the file to be created
+     * @param lines String[] - Array of lines to be written to the file
+     */
+    private void constructFile(String filename, String[] lines) throws IOException{
+       
+        // Put the file in the current bittle directory
+        Path filePath = Paths.get(rootpath + "\\" + filename);
+        
+        // Convert the array of Strings into an iterable list
+        Iterable<String> lineList = Arrays.asList(lines);
+        
+        // Write the lines to the file
+        // The CREATE flag creates the file if it doesn't exist
+        Files.write(filePath, lineList, CREATE);
     }
 }
