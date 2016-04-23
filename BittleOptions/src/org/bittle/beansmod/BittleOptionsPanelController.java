@@ -26,7 +26,7 @@ public final class BittleOptionsPanelController extends OptionsPanelController {
 
     private BittlePanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
-    Connection connection = new Connection();
+    Connection connection = Connection.getInstance();
     private boolean changed;
     private String rootpath;
 
