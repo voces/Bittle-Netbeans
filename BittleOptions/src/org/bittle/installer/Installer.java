@@ -4,7 +4,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import javax.swing.JOptionPane;
+//import javax.swing.JOptionPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
@@ -57,19 +57,19 @@ public class Installer extends org.openide.modules.ModuleInstall implements Runn
                     int keycode = e.getKeyCode();
                     switch (keycode) {
                         case KeyEvent.VK_LEFT:
-                            JOptionPane.showMessageDialog(null, "1 Left: " + e.getKeyCode());
+//                            JOptionPane.showMessageDialog(null, "1 Left: " + e.getKeyCode());
                             break;
                         case KeyEvent.VK_RIGHT:
-                            JOptionPane.showMessageDialog(null, "1 Right: " + e.getKeyCode());
+//                            JOptionPane.showMessageDialog(null, "1 Right: " + e.getKeyCode());
                             break;
                         case KeyEvent.VK_DOWN:
-                            JOptionPane.showMessageDialog(null, "1 Down: " + e.getKeyCode());
+//                            JOptionPane.showMessageDialog(null, "1 Down: " + e.getKeyCode());
                             break;
                         case KeyEvent.VK_UP:
-                            JOptionPane.showMessageDialog(null, "1 Up: " + e.getKeyCode());
+//                            JOptionPane.showMessageDialog(null, "1 Up: " + e.getKeyCode());
                             break;
                         case KeyEvent.VK_ENTER:
-                            JOptionPane.showMessageDialog(null, "Enter: "+e.getKeyCode());
+//                            JOptionPane.showMessageDialog(null, "Enter: "+e.getKeyCode());
                             break;
                     }
                 }
@@ -79,19 +79,19 @@ public class Installer extends org.openide.modules.ModuleInstall implements Runn
                     int keycode = e.getKeyCode();
                     switch (keycode) {
                         case KeyEvent.VK_LEFT:
-                            JOptionPane.showMessageDialog(null, "2 Left: " + e.getKeyCode());
+//                            JOptionPane.showMessageDialog(null, "2 Left: " + e.getKeyCode());
                             break;
                         case KeyEvent.VK_RIGHT:
-                            JOptionPane.showMessageDialog(null, "2 Right: " + e.getKeyCode());
+//                            JOptionPane.showMessageDialog(null, "2 Right: " + e.getKeyCode());
                             break;
                         case KeyEvent.VK_DOWN:
-                            JOptionPane.showMessageDialog(null, "2 Down: " + e.getKeyCode());
+//                            JOptionPane.showMessageDialog(null, "2 Down: " + e.getKeyCode());
                             break;
                         case KeyEvent.VK_UP:
-                            JOptionPane.showMessageDialog(null, "2 Up: " + e.getKeyCode());
+//                            JOptionPane.showMessageDialog(null, "2 Up: " + e.getKeyCode());
                             break;
                         case KeyEvent.VK_ENTER:
-                            JOptionPane.showMessageDialog(null, "Enter: "+e.getKeyCode());
+//                            JOptionPane.showMessageDialog(null, "Enter: "+e.getKeyCode());
                             break;
                     }
                 }
@@ -101,19 +101,19 @@ public class Installer extends org.openide.modules.ModuleInstall implements Runn
                     int keycode = e.getKeyCode();
                     switch (keycode) {
                         case KeyEvent.VK_LEFT:
-                            JOptionPane.showMessageDialog(null, "3 Left: " + e.getKeyCode());
+//                            JOptionPane.showMessageDialog(null, "3 Left: " + e.getKeyCode());
                             break;
                         case KeyEvent.VK_RIGHT:
-                            JOptionPane.showMessageDialog(null, "3 Right: " + e.getKeyCode());
+//                            JOptionPane.showMessageDialog(null, "3 Right: " + e.getKeyCode());
                             break;
                         case KeyEvent.VK_DOWN:
-                            JOptionPane.showMessageDialog(null, "3 Down: " + e.getKeyCode());
+//                            JOptionPane.showMessageDialog(null, "3 Down: " + e.getKeyCode());
                             break;
                         case KeyEvent.VK_UP:
-                            JOptionPane.showMessageDialog(null, "3 Up: " + e.getKeyCode());
+//                            JOptionPane.showMessageDialog(null, "3 Up: " + e.getKeyCode());
                             break;
                         case KeyEvent.VK_ENTER:
-                            JOptionPane.showMessageDialog(null, "Enter: "+e.getKeyCode());
+//                            JOptionPane.showMessageDialog(null, "Enter: "+e.getKeyCode());
                             break;
                     }
                 }
