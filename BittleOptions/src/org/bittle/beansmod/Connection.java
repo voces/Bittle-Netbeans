@@ -16,6 +16,19 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
 @WebSocket
 public class Connection {
     
+    //singleton
+    private static final Connection instance;
+    
+    static {
+        instance = new Connection();
+    }
+    
+    private Connection() { }
+    
+    public static Connection getInstance() {
+        return instance;
+    }
+    
     private static final Logger LOG = Log.getLogger(Connection.class);
     private static Session session;
     
