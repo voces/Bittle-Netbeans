@@ -361,13 +361,7 @@ final class BittlePanel extends javax.swing.JPanel {
 
     private void LogOutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LogOutButtonActionPerformed
         // TODO: add proper logout code here
-        
-        connection.logout();     // Let the server know we are logging out
-        LoggedIn = false;        // Set the log in info to the defaults
-        username = "";
-        password = "";
-        store();
-        //load(); 
+        logout();
         
         // Update the login screen and file tree
         LoggedInPanel.setVisible(false);
@@ -375,6 +369,14 @@ final class BittlePanel extends javax.swing.JPanel {
         fileTree.updateTree();
     }//GEN-LAST:event_LogOutButtonActionPerformed
 
+    void logout(){
+        connection.logout();
+        LoggedIn = false;
+        username = "";
+        password = "";
+        store();
+    }
+    
     void load() {
         UsernameField.setText(NbPreferences.forModule(BittlePanel.class).get("username", ""));
         PasswordField.setText(NbPreferences.forModule(BittlePanel.class).get("password", ""));

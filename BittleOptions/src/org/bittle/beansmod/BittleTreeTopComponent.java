@@ -7,9 +7,7 @@ package org.bittle.beansmod;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -20,7 +18,11 @@ import org.netbeans.api.options.OptionsDisplayer;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
-import org.openide.util.Exceptions;
+import org.openide.cookies.OpenCookie;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
+import org.openide.loaders.DataObject;
+import org.openide.loaders.DataObjectNotFoundException;
 import org.openide.windows.TopComponent;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.NbPreferences;
@@ -52,8 +54,8 @@ import org.openide.util.NbPreferences;
 public final class BittleTreeTopComponent extends TopComponent {
     
     private Boolean loggedIn;
-    private TreePopup treePopup;
-    private SyncList syncList;
+    private final TreePopup treePopup;
+    private final SyncList syncList;
 
     public BittleTreeTopComponent() {
         syncList = SyncList.getInstance();
@@ -201,8 +203,7 @@ public final class BittleTreeTopComponent extends TopComponent {
         if(choice == JFileChooser.APPROVE_OPTION){
             String filePath = fileChooser.getSelectedFile().toString();
             try {
-                if(SyncList.addNewFile(filePath))
-                    addObject(filePath.substring(filePath.lastIndexOf("\\")+1));
+                SyncList.addNewFile(filePath);
             } catch (IOException ex) {
             }
         }
@@ -211,15 +212,23 @@ public final class BittleTreeTopComponent extends TopComponent {
     private void fileTreeMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_fileTreeMouseClicked
         int row = fileTree.getClosestRowForLocation(evt.getX(), evt.getY());
         fileTree.setSelectionRow(row);
+        
+        // If the user right clicked
         if (SwingUtilities.isRightMouseButton(evt))
             treePopup.show(evt.getComponent(), evt.getX(), evt.getY());
+        
+        // If the user double clicked
         else if(evt.getClickCount() == 2){
             TreePath selection = fileTree.getSelectionPath();
             if(selection != null){
                 DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode)selection.getLastPathComponent();
-                if(!selectedNode.getUserObject().equals("Bittle Files"))
-                    JOptionPane.showMessageDialog(null, "TODO: Open " + selectedNode.getUserObject());
-                    // ADD CODE FOR OPENING FILE HERE
+                if(!selectedNode.getUserObject().equals("Bittle Files")){
+                    FileObject fo = FileUtil.toFileObject(FileUtil.normalizeFile(new File(SyncList.getBittleFilePath((String)selectedNode.getUserObject()))));
+                    try {
+                        DataObject.find(fo).getLookup().lookup(OpenCookie.class).open();
+                    } catch (DataObjectNotFoundException ex) {
+                    }
+                }
             }
         }
     }//GEN-LAST:event_fileTreeMouseClicked
@@ -273,14 +282,7 @@ public final class BittleTreeTopComponent extends TopComponent {
         loggedIn = NbPreferences.forModule(BittlePanel.class).getBoolean("status", false);
         
         if(loggedIn){
-            String[] files = new File(SyncList.bittlePath).list();
-            Iterable<String> fileList = Arrays.asList(files);
-            for(String file : fileList){
-                if(!syncList.contains(file)){
-                    syncList.add(file);
-                    addObject(file);
-                }
-            }
+            SyncList.scanFolder();
             treeModel.reload();
             LoggedInScreen.setVisible(true);
             NotLoggedInScreen.setVisible(false);
@@ -296,7 +298,7 @@ public final class BittleTreeTopComponent extends TopComponent {
        // TODO: Remove everything from everywhere
    }
    
-   private DefaultMutableTreeNode addObject(Object child){
+   public DefaultMutableTreeNode addObject(Object child){
        return addObject(rootNode, child, true);
    }
    
