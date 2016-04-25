@@ -24,6 +24,7 @@ final class BittlePanel extends javax.swing.JPanel {
     private final BittleTreeTopComponent fileTree; 
     private final Connection connection;
     private final String serverName = "wss://notextures.io:8086";
+    private final SyncList syncList;
     
     private String username = "";
     private String password = "";
@@ -34,6 +35,7 @@ final class BittlePanel extends javax.swing.JPanel {
         this.controller = controller;
         this.connection = connection;
         this.fileTree = (BittleTreeTopComponent) WindowManager.getDefault().findTopComponent("BittleTree");
+        syncList = SyncList.getInstance();
         
         store();
         initComponents();
@@ -290,9 +292,6 @@ final class BittlePanel extends javax.swing.JPanel {
             
             store();    // Stores the new rootpath
             load();     // Shows the new rootpath in the text box
-            
-            // Update the tree to show the right folder
-            fileTree.updateScreen();
         }
     }//GEN-LAST:event_BrowseButtonActionPerformed
 
@@ -357,7 +356,7 @@ final class BittlePanel extends javax.swing.JPanel {
         LogInPanel.setVisible(false);
         LoggedInLabel.setText("Hey There, " + username);
         LoggedInPanel.setVisible(true);
-        fileTree.updateScreen();
+        fileTree.updateTree();
     }//GEN-LAST:event_LoginButtonActionPerformed
 
     private void LogOutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LogOutButtonActionPerformed
@@ -373,7 +372,7 @@ final class BittlePanel extends javax.swing.JPanel {
         // Update the login screen and file tree
         LoggedInPanel.setVisible(false);
         LogInPanel.setVisible(true);
-        fileTree.updateScreen();
+        fileTree.updateTree();
     }//GEN-LAST:event_LogOutButtonActionPerformed
 
     void load() {
@@ -387,6 +386,7 @@ final class BittlePanel extends javax.swing.JPanel {
         NbPreferences.forModule(BittlePanel.class).put("password", password);
         NbPreferences.forModule(BittlePanel.class).put("rootpath", rootpath);
         NbPreferences.forModule(BittlePanel.class).putBoolean("status", LoggedIn);
+        SyncList.bittlePath = rootpath;
     }
 
     boolean valid() {

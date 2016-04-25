@@ -5,19 +5,22 @@
  */
 package org.bittle.beansmod;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.File;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
-import javax.swing.JSeparator;
+import java.io.IOException;
+import java.util.Arrays;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 import org.netbeans.api.options.OptionsDisplayer;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
+import org.openide.util.Exceptions;
 import org.openide.windows.TopComponent;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.NbPreferences;
@@ -48,19 +51,17 @@ import org.openide.util.NbPreferences;
 })
 public final class BittleTreeTopComponent extends TopComponent {
     
-    private String rootpath = System.getProperty("user.home");
-    private String optionsRoot = null;
     private Boolean loggedIn;
     private TreePopup treePopup;
+    private SyncList syncList;
 
-    public BittleTreeTopComponent() {     
-        rootpath = NbPreferences.forModule(BittlePanel.class).get("rootpath", "");
+    public BittleTreeTopComponent() {
+        syncList = SyncList.getInstance();
         initComponents();
+        treePopup = new TreePopup(fileTree, treeModel);
         setName(Bundle.CTL_BittleTreeTopComponent());
         setToolTipText(Bundle.HINT_BittleTreeTopComponent());   
-        updateScreen();
     }
-
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -69,22 +70,68 @@ public final class BittleTreeTopComponent extends TopComponent {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        NotLoggedInScreen = new javax.swing.JPanel();
-        jLabel4 = new javax.swing.JLabel();
-        jLabel1 = new javax.swing.JLabel();
-        OpenOptionsButton = new javax.swing.JButton();
-        LoggedInScreen = new javax.swing.JScrollPane();
+        LoggedInScreen = new javax.swing.JPanel();
+        addButton = new javax.swing.JButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
         fileTree = new javax.swing.JTree();
+        NotLoggedInScreen = new javax.swing.JPanel();
+        FlipGuy = new javax.swing.JLabel();
+        NotLoggedInMessage = new javax.swing.JLabel();
+        ToOptionsButton = new javax.swing.JButton();
 
-        jLabel4.setFont(new java.awt.Font("Dialog", 0, 20)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(BittleTreeTopComponent.class, "BittleTreeTopComponent.jLabel4.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(BittleTreeTopComponent.class, "BittleTreeTopComponent.jLabel1.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(OpenOptionsButton, org.openide.util.NbBundle.getMessage(BittleTreeTopComponent.class, "BittleTreeTopComponent.OpenOptionsButton.text")); // NOI18N
-        OpenOptionsButton.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(addButton, org.openide.util.NbBundle.getMessage(BittleTreeTopComponent.class, "BittleTreeTopComponent.addButton.text")); // NOI18N
+        addButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                OpenOptionsButtonActionPerformed(evt);
+                addButtonActionPerformed(evt);
+            }
+        });
+
+        rootNode = new DefaultMutableTreeNode("Bittle Files");
+        treeModel = new DefaultTreeModel(rootNode);
+        fileTree = new JTree(treeModel);
+        fileTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+        fileTree.setShowsRootHandles(true);
+        fileTree.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                fileTreeMouseClicked(evt);
+            }
+        });
+        jScrollPane1.setViewportView(fileTree);
+
+        javax.swing.GroupLayout LoggedInScreenLayout = new javax.swing.GroupLayout(LoggedInScreen);
+        LoggedInScreen.setLayout(LoggedInScreenLayout);
+        LoggedInScreenLayout.setHorizontalGroup(
+            LoggedInScreenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(LoggedInScreenLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(LoggedInScreenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(LoggedInScreenLayout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(addButton)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 276, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        LoggedInScreenLayout.setVerticalGroup(
+            LoggedInScreenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, LoggedInScreenLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 283, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(addButton)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        FlipGuy.setFont(new java.awt.Font("Dialog", 0, 24)); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(FlipGuy, org.openide.util.NbBundle.getMessage(BittleTreeTopComponent.class, "BittleTreeTopComponent.FlipGuy.text")); // NOI18N
+
+        NotLoggedInMessage.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(NotLoggedInMessage, org.openide.util.NbBundle.getMessage(BittleTreeTopComponent.class, "BittleTreeTopComponent.NotLoggedInMessage.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(ToOptionsButton, org.openide.util.NbBundle.getMessage(BittleTreeTopComponent.class, "BittleTreeTopComponent.ToOptionsButton.text")); // NOI18N
+        ToOptionsButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ToOptionsButtonActionPerformed(evt);
             }
         });
 
@@ -93,79 +140,110 @@ public final class BittleTreeTopComponent extends TopComponent {
         NotLoggedInScreenLayout.setHorizontalGroup(
             NotLoggedInScreenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(NotLoggedInScreenLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(NotLoggedInScreenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel4)
-                    .addGroup(NotLoggedInScreenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                        .addComponent(OpenOptionsButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addContainerGap(57, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(FlipGuy)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, NotLoggedInScreenLayout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(NotLoggedInMessage)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(NotLoggedInScreenLayout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(ToOptionsButton)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         NotLoggedInScreenLayout.setVerticalGroup(
             NotLoggedInScreenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(NotLoggedInScreenLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel4)
+                .addComponent(FlipGuy)
                 .addGap(18, 18, 18)
-                .addComponent(jLabel1)
+                .addComponent(NotLoggedInMessage)
                 .addGap(18, 18, 18)
-                .addComponent(OpenOptionsButton)
-                .addContainerGap(286, Short.MAX_VALUE))
+                .addComponent(ToOptionsButton)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-
-        fileTree.setModel(new FileTreeModel(new File(rootpath)));
-        fileTree.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                fileTreeMouseClicked(evt);
-            }
-        });
-        LoggedInScreen.setViewportView(fileTree);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 256, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(LoggedInScreen, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(NotLoggedInScreen, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(LoggedInScreen, javax.swing.GroupLayout.DEFAULT_SIZE, 256, Short.MAX_VALUE))
+                .addGroup(layout.createSequentialGroup()
+                    .addGap(38, 38, 38)
+                    .addComponent(NotLoggedInScreen, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addContainerGap(38, Short.MAX_VALUE)))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(LoggedInScreen, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(NotLoggedInScreen, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(LoggedInScreen, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE))
+                .addGroup(layout.createSequentialGroup()
+                    .addGap(138, 138, 138)
+                    .addComponent(NotLoggedInScreen, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addContainerGap(138, Short.MAX_VALUE)))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void OpenOptionsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_OpenOptionsButtonActionPerformed
-        OptionsDisplayer.getDefault().open("BittleOptions");
-    }//GEN-LAST:event_OpenOptionsButtonActionPerformed
+    private void addButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addButtonActionPerformed
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+        int choice = fileChooser.showOpenDialog(null);
+
+        if(choice == JFileChooser.APPROVE_OPTION){
+            String filePath = fileChooser.getSelectedFile().toString();
+            try {
+                if(SyncList.addNewFile(filePath))
+                    addObject(filePath.substring(filePath.lastIndexOf("\\")+1));
+            } catch (IOException ex) {
+            }
+        }
+    }//GEN-LAST:event_addButtonActionPerformed
 
     private void fileTreeMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_fileTreeMouseClicked
-        if (SwingUtilities.isRightMouseButton(evt)) {
-
-            int row = fileTree.getClosestRowForLocation(evt.getX(), evt.getY());
-            fileTree.setSelectionRow(row);
+        int row = fileTree.getClosestRowForLocation(evt.getX(), evt.getY());
+        fileTree.setSelectionRow(row);
+        if (SwingUtilities.isRightMouseButton(evt))
             treePopup.show(evt.getComponent(), evt.getX(), evt.getY());
+        else if(evt.getClickCount() == 2){
+            TreePath selection = fileTree.getSelectionPath();
+            if(selection != null){
+                DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode)selection.getLastPathComponent();
+                if(!selectedNode.getUserObject().equals("Bittle Files"))
+                    JOptionPane.showMessageDialog(null, "TODO: Open " + selectedNode.getUserObject());
+                    // ADD CODE FOR OPENING FILE HERE
+            }
         }
     }//GEN-LAST:event_fileTreeMouseClicked
 
+    private void ToOptionsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ToOptionsButtonActionPerformed
+        OptionsDisplayer.getDefault().open("BittleOptions");
+    }//GEN-LAST:event_ToOptionsButtonActionPerformed
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JScrollPane LoggedInScreen;
+    private javax.swing.JLabel FlipGuy;
+    private javax.swing.JPanel LoggedInScreen;
+    private javax.swing.JLabel NotLoggedInMessage;
     private javax.swing.JPanel NotLoggedInScreen;
-    private javax.swing.JButton OpenOptionsButton;
+    private javax.swing.JButton ToOptionsButton;
+    private javax.swing.JButton addButton;
     private javax.swing.JTree fileTree;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel4;
+    private javax.swing.JScrollPane jScrollPane1;
     // End of variables declaration//GEN-END:variables
-   
+    private DefaultMutableTreeNode rootNode;
+    private DefaultTreeModel treeModel;
+    
     @Override
     public void componentOpened() {
-        updateScreen();
+        updateTree();
     }
     
     @Override
@@ -186,27 +264,24 @@ public final class BittleTreeTopComponent extends TopComponent {
     }
     
     /**
-     * Displays the appropriate screen in the top component
-     * - Gets the most up to date log in state from the preferences
+     * Updates Log In State and Bittle Directory Path
      * - If the user is logged in:
-     *    * Gets the most up to date root from the preferences 
-     *    * Instantiates a new tree with that root and displays it
+     *    * Shows the contents of the bittle folder 
      * - Otherwise, displays the not logged in screen
      */
-    public void updateScreen(){
+    public void updateTree(){
         loggedIn = NbPreferences.forModule(BittlePanel.class).getBoolean("status", false);
         
         if(loggedIn){
-            rootpath = NbPreferences.forModule(BittlePanel.class).get("rootpath", "");
-            fileTree = null;
-            fileTree = new JTree(new FileTreeModel(new File(rootpath)));
-            fileTree.addMouseListener(new MouseAdapter() {
-                public void mouseClicked(MouseEvent evt) {
-                    fileTreeMouseClicked(evt);
+            String[] files = new File(SyncList.bittlePath).list();
+            Iterable<String> fileList = Arrays.asList(files);
+            for(String file : fileList){
+                if(!syncList.contains(file)){
+                    syncList.add(file);
+                    addObject(file);
                 }
-            });
-            treePopup = new TreePopup(fileTree);
-            LoggedInScreen.setViewportView(fileTree); 
+            }
+            treeModel.reload();
             LoggedInScreen.setVisible(true);
             NotLoggedInScreen.setVisible(false);
         }
@@ -215,20 +290,24 @@ public final class BittleTreeTopComponent extends TopComponent {
             LoggedInScreen.setVisible(false);
         }
     }
-   class TreePopup extends JPopupMenu {
-       public TreePopup(JTree tree) {
-           JMenuItem itemDelete = new JMenuItem("Delete");
-           JMenuItem itemAdd = new JMenuItem("Add");
-           itemDelete.addActionListener((ActionEvent e) -> {
-               System.out.println("Delete child");
-           });
-           itemAdd.addActionListener((ActionEvent ae) -> {
-               System.out.println("Add child");
-           });
-  
-           add(itemDelete);
-           add(new JSeparator());
-           add(itemAdd);
-       }
+   private void clearFiles(){
+       rootNode.removeAllChildren();
+       treeModel.reload();
+       // TODO: Remove everything from everywhere
+   }
+   
+   private DefaultMutableTreeNode addObject(Object child){
+       return addObject(rootNode, child, true);
+   }
+   
+   private DefaultMutableTreeNode addObject(DefaultMutableTreeNode parent, Object child, boolean visible){
+       DefaultMutableTreeNode childNode = new DefaultMutableTreeNode(child);
+       
+       treeModel.insertNodeInto(childNode, parent, parent.getChildCount());
+       
+       if(visible)
+           fileTree.scrollPathToVisible(new TreePath(childNode.getPath()));
+       
+       return childNode;
    }
 }
