@@ -7,8 +7,6 @@ package org.bittle.beansmod;
 
 import java.awt.event.ActionEvent;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -23,7 +21,7 @@ import javax.swing.tree.TreePath;
  * @author chmar
  */
 public class TreePopup extends JPopupMenu{
-    private SyncList syncList;
+    private final SyncList syncList;
     
     public TreePopup(JTree tree, DefaultTreeModel treeModel) {
         syncList = SyncList.getInstance();
@@ -35,7 +33,7 @@ public class TreePopup extends JPopupMenu{
             if(selection != null){
                 DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode)selection.getLastPathComponent();
                 if(!selectedNode.getUserObject().equals("Bittle Files"))
-                    JOptionPane.showMessageDialog(null, selectedNode.getUserObject());
+                    JOptionPane.showMessageDialog(null, "TODO: Share" + selectedNode.getUserObject());
                     // ADD CODE FOR SHARING FILES HERE
                     // Filename can be accessed through selectedNode.getUserObject()
             }
@@ -45,7 +43,7 @@ public class TreePopup extends JPopupMenu{
             if(selection != null){
                 DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode)selection.getLastPathComponent();
                 if(!selectedNode.getUserObject().equals("Bittle Files"))
-                    JOptionPane.showMessageDialog(null, selectedNode.getUserObject());
+                    JOptionPane.showMessageDialog(null, "TODO: Stop Sharing" + selectedNode.getUserObject());
                 // ADD CODE FOR SHARING FILES HERE
                 // Filename can be accessed through selectedNode.getUserObject()
             }
@@ -54,10 +52,9 @@ public class TreePopup extends JPopupMenu{
             TreePath selection = tree.getSelectionPath();
             if(selection != null){
                 DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode)selection.getLastPathComponent();
-                treeModel.removeNodeFromParent(selectedNode);
-                syncList.remove((String)selectedNode.getUserObject());
                 try {
-                    Files.deleteIfExists(Paths.get(SyncList.bittlePath + "\\" + (String)selectedNode.getUserObject()));
+                    SyncList.removeFile((String) selectedNode.getUserObject());
+                    treeModel.removeNodeFromParent(selectedNode);
                 } catch (IOException ex) {
                 }
             }

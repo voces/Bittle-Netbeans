@@ -10,7 +10,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
-import org.bittle.beansmod.Connection;
+import org.bittle.beansmod.*;
 import org.json.simple.JSONArray;
 import org.netbeans.api.editor.EditorRegistry;
 import org.openide.loaders.DataObject;
@@ -25,17 +25,24 @@ public class Installer extends org.openide.modules.ModuleInstall implements Runn
     private Document currentDocument;
     private DocumentListener currentDocumentListener;
     private JTextComponent currentTextComponent;
+    private Connection connection;
 
     @Override
     public void restored() {
         WindowManager manager = WindowManager.getDefault();
         manager.invokeWhenUIReady(this);
     }
+    
+    @Override
+    public void close(){
+        BittleOptionsPanelController.getInstance().logOut();
+        connection.close();
+    }
 
     @Override
     public void run() {
         
-        Connection connection = Connection.getInstance();
+        connection = Connection.getInstance();
         connection.connect("wss://notextures.io:8086");
         connection.clean();
         connection.register("temp_evan", "tacosaregreat");
