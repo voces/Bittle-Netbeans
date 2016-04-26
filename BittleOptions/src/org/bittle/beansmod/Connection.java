@@ -55,6 +55,10 @@ public class Connection {
     {
         LOG.info("onMessage() - {}", msg);
         //big switch statement goes here based on the response's id
+        
+        //on the message responding to an editor change, check awaitingServerResponseForEdit flag; true = don't update, false = update
+        //not the best solution because this client won't get any editor updates until getting a response from the server?
+        //might be able to get around this if the server's messages for line changes have something that tells us an update is from another client
     }
     
     public void connect(String url) {
