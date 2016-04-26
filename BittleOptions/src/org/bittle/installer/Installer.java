@@ -4,7 +4,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import javax.swing.JOptionPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
@@ -25,7 +24,7 @@ public class Installer extends org.openide.modules.ModuleInstall implements Runn
     public static boolean shouldSendMessage = true;
     private Document currentDocument;
     private DocumentListener currentDocumentListener;
-    private JTextComponent currentTextComponent;
+    private JTextComponent currentComponent;
     private Connection connection;
 
     @Override
@@ -45,63 +44,65 @@ public class Installer extends org.openide.modules.ModuleInstall implements Runn
         
         connection = Connection.getInstance();
         connection.connect("wss://notextures.io:8086");
-        connection.clean();
-        connection.register("temp_evan", "tacosaregreat");
+//        connection.clean();
+//        connection.register("temp_evan", "tacosaregreat");
         connection.login("temp_evan", "tacosaregreat");
 
         PropertyChangeListener l = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                JTextComponent jtc = EditorRegistry.lastFocusedComponent();
-
-                //make sure we're changing editors before doing anything
-                if (currentTextComponent == null || jtc != currentTextComponent) {
-                    if (jtc != null) {
-                        currentTextComponent = jtc;
+                //make sure the event is changing editors before doing anything
+                JTextComponent lastFocusedComponent = EditorRegistry.lastFocusedComponent();
+                if (currentComponent == null || lastFocusedComponent != currentComponent) {
+                    if (lastFocusedComponent != null) {
+                        currentComponent = lastFocusedComponent;
                         if (currentDocumentListener != null) {
-                            currentDocument.removeDocumentListener(currentDocumentListener); //remove last listener from last document on changing editor
+                            currentDocument.removeDocumentListener(currentDocumentListener); //remove listener associated with the last editor
                         }
-                        currentDocument = jtc.getDocument();
+                        currentDocument = lastFocusedComponent.getDocument(); //grab the new editor
 
                         //----------------------------------------------------
                         //IF THE DOCUMENT IS ONE BEING TRACKED:
                         //Look up in the hash set
                         //----------------------------------------------------
+                        String filePath = FileUtil.toFile(TopComponent.getRegistry().getActivated().getLookup().lookup(DataObject.class).getPrimaryFile()).getAbsolutePath();
+                        String fileName = Paths.get(filePath).getFileName().toString();
+                        //if (filePath is being tracked) ..........
                         
+                        //attach a new listener to the editor
                         currentDocument.addDocumentListener(currentDocumentListener = new DocumentListener() {
                             
-                            String filePath = FileUtil.toFile(TopComponent.getRegistry().getActivated().getLookup().lookup(DataObject.class).getPrimaryFile()).getAbsolutePath();
-                            String fileName = Paths.get(filePath).getFileName().toString();
                             @Override
                             public void changedUpdate(DocumentEvent e) {
-                                JOptionPane.showMessageDialog(null, "changedUpdate: Changed " + e.getLength()
-                                        + " characters, document length = " + e.getDocument().getLength());
+                                //Don't think this can fire for the Document class
                             }
 
                             @Override
                             public void insertUpdate(DocumentEvent e) {
                                 if (shouldSendMessage) {
                                     //send message
-                                    int lineStart = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset());
-                                    int lineEnd = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset() + e.getLength());
-                                    String text = null;
+                                    int startingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset());
+                                    int endingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset() + e.getLength());
+                                    String addedText = null;
                                     try {
-                                        text = currentDocument.getText(e.getOffset(), e.getLength());
+                                        addedText = currentDocument.getText(e.getOffset(), e.getLength());
                                     } catch (BadLocationException ex) {
                                         Exceptions.printStackTrace(ex);
                                     }
-                                    if (lineStart != lineEnd) {
+                                    if (startingLineNumber != endingLineNumber) {
                                         //multi-line insert, split lines and send as JSON array of strings
-                                        String[] lines = text.split("\\r?\\n");
+                                        String[] lines = addedText.split("\\r?\\n");
                                         String JSONlines = JSONArray.toJSONString(Arrays.asList(lines));
                                         connection.lines(fileName, e.getOffset(), 0, JSONlines);
                                     }
                                     else {
                                         //single-line insert
-                                        connection.line(fileName, lineStart, e.getOffset(), 0, text);
+                                        connection.line(fileName, startingLineNumber, e.getOffset(), 0, addedText);
                                     }
                                 }
                                 else {
+                                    //this was (probably) the client that issued the change (this flag is not a safe approach!)
+                                    //something is likely to go wrong here if multiple clients are sending messages
                                     shouldSendMessage = true;
                                 }
                             }
@@ -110,12 +111,12 @@ public class Installer extends org.openide.modules.ModuleInstall implements Runn
                             public void removeUpdate(DocumentEvent e) {
                                 if (shouldSendMessage) {
                                     //send message
-                                    int lineStart = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset()); //line # of cursor after the delete
-                                    int lineEnd = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset() + e.getLength()); //line # of the last part of deleted text
+                                    int startingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset()); //line # of cursor after the delete
+                                    int endingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset() + e.getLength()); //line # of the last part of deleted text
                                     //lineEnd will default to the last line if the line number it used to be on exceeds the new line count, so check for that as well
-                                    if (lineStart != lineEnd || e.getOffset() + e.getLength() > currentDocument.getLength()) {
+                                    if (startingLineNumber != endingLineNumber || e.getOffset() + e.getLength() > currentDocument.getLength()) {
                                         //get line of text of the current line (lineStart)
-                                        Element currentLine = currentDocument.getDefaultRootElement().getElement(lineStart);
+                                        Element currentLine = currentDocument.getDefaultRootElement().getElement(startingLineNumber);
                                         String currentLineText = null;
                                         try {
                                             currentLineText = currentDocument.getText(currentLine.getStartOffset(), currentLine.getEndOffset() - currentLine.getStartOffset());
@@ -127,7 +128,7 @@ public class Installer extends org.openide.modules.ModuleInstall implements Runn
                                     }
                                     else {
                                         //single-line insert
-                                        connection.line(fileName, lineStart, e.getOffset(), e.getLength(), "");
+                                        connection.line(fileName, startingLineNumber, e.getOffset(), e.getLength(), "");
                                     }
                                 }
                                 else {
