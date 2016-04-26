@@ -178,10 +178,10 @@ public class Connection {
     
     //update: 4/23/16
     public void lines(String filename, int start, int deleteCount, String lines) {
-        sendMessage("{\"id\":\"lines\", \"fliename\":\"" + filename + "\", \"start\":\"" + start + "\", \"deleteCount\":\"" + deleteCount + "\", \"lines\": \"" + lines + "\"}");
+        sendMessage("{\"id\":\"lines\", \"filename\":\"" + filename + "\", \"start\":" + start + ", \"deleteCount\":" + deleteCount + ", \"lines\": " + lines + "}");
     }
     
     public void line(String filename, int lineIndex, int start, int deleteCount, String line) {
-        sendMessage("{\"id\":\"line\", \"fliename\":\"" + filename + "\", \"lineIndex\":\"" + lineIndex + "\", \"start\":\"" + start + "\", \"deleteCount\": \"" + deleteCount +  "\", \"line\":\"" + line + "\"}");
+        sendMessage("{\"id\":\"line\", \"filename\":\"" + filename + "\", \"lineIndex\":" + lineIndex + ", \"start\":" + start + ", \"deleteCount\": " + deleteCount +  ", \"line\":" + line + "}");
     }
 }

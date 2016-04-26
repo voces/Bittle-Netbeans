@@ -9,6 +9,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.swing.text.Element;
 import javax.swing.text.JTextComponent;
 import org.bittle.beansmod.Connection;
 import org.json.simple.JSONArray;
@@ -86,11 +87,11 @@ public class Installer extends org.openide.modules.ModuleInstall implements Runn
                                         //multi-line insert, split lines and send as JSON array of strings
                                         String[] lines = text.split("\\r?\\n");
                                         String JSONlines = JSONArray.toJSONString(Arrays.asList(lines));
-                                        connection.lines(fileName, e.getOffset(), 0, JSONlines); //"invalid JSON"
+                                        connection.lines(fileName, e.getOffset(), 0, JSONlines);
                                     }
                                     else {
                                         //single-line insert
-                                        connection.line(fileName, lineStart, e.getOffset(), 0, text); //"missing filename"
+                                        connection.line(fileName, lineStart, e.getOffset(), 0, text);
                                     }
                                 }
                                 else {
@@ -102,23 +103,24 @@ public class Installer extends org.openide.modules.ModuleInstall implements Runn
                             public void removeUpdate(DocumentEvent e) {
                                 if (shouldSendMessage) {
                                     //send message
-                                    int lineStart = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset() + e.getLength()); //line # before delete
-                                    int lineEnd = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset()); //line # after delete
-                                    String text = null;
-                                    try {
-                                        text = currentDocument.getText(e.getOffset(), e.getLength());
-                                    } catch (BadLocationException ex) {
-                                        Exceptions.printStackTrace(ex);
-                                    }
-                                    if (lineStart != lineEnd) {
-                                        //multi-line insert, split lines and send as JSON array of strings
-                                        String[] lines = text.split("\\r?\\n");
-                                        String JSONlines = JSONArray.toJSONString(Arrays.asList(lines));
-                                        connection.lines(fileName, e.getOffset(), e.getLength(), JSONlines); //what do I send for the string array?
+                                    int lineStart = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset()); //line # of cursor after the delete
+                                    int lineEnd = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset() + e.getLength()); //line # of the last part of deleted text
+                                    //lineEnd will default to the last line if the line number it used to be on exceeds the new line count, so check for that as well
+                                    if (lineStart != lineEnd || e.getOffset() + e.getLength() > currentDocument.getLength()) {
+                                        //get line of text of the current line (lineStart)
+                                        Element currentLine = currentDocument.getDefaultRootElement().getElement(lineStart);
+                                        String currentLineText = null;
+                                        try {
+                                            currentLineText = currentDocument.getText(currentLine.getStartOffset(), currentLine.getEndOffset() - currentLine.getStartOffset());
+                                            currentLineText = currentLineText.replace("\n", ""); //strip the newline
+                                            connection.lines(fileName, e.getOffset(), e.getLength(), "[\"" + currentLineText + "\"]");
+                                        } catch (BadLocationException ex) {
+                                            Exceptions.printStackTrace(ex);
+                                        }
                                     }
                                     else {
                                         //single-line insert
-                                        connection.line(fileName, lineStart, e.getOffset(), e.getLength(), text); //what do I send for the text?
+                                        connection.line(fileName, lineStart, e.getOffset(), e.getLength(), "");
                                     }
                                 }
                                 else {
