@@ -24,17 +24,33 @@ import org.openide.util.Lookup;
 @org.openide.util.NbBundle.Messages({"OptionsCategory_Name_Bittle=Bittle", "OptionsCategory_Keywords_Bittle=Bittle, log in, register, sync, lol, idk"})
 public final class BittleOptionsPanelController extends OptionsPanelController {
 
+    private static final BittleOptionsPanelController instance;
     private BittlePanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     Connection connection = Connection.getInstance();
     private boolean changed;
-    private String rootpath;
+    
+    static{
+        instance = new BittleOptionsPanelController();
+    }
+    
+    private BittleOptionsPanelController() {}
+    
+    public static BittleOptionsPanelController getInstance(){
+        return instance;
+    }
+    
+    public void logOut(){
+        getPanel().logout();
+    }
 
+    @Override
     public void update() {
         getPanel().load();
         changed = false;
     }
 
+    @Override
     public void applyChanges() {
         SwingUtilities.invokeLater(() -> {
                 getPanel().store();
@@ -42,44 +58,41 @@ public final class BittleOptionsPanelController extends OptionsPanelController {
             });
     }
 
+    @Override
     public void cancel() {
         // need not do anything special, if no changes have been persisted yet
     }
 
+    @Override
     public boolean isValid() {
         return getPanel().valid();
     }
 
+    @Override
     public boolean isChanged() {
         return changed;
     }
 
+    @Override
     public HelpCtx getHelpCtx() {
         return null; // new HelpCtx("...ID") if you have a help set
     }
 
+    @Override
     public JComponent getComponent(Lookup masterLookup) {
         return getPanel();
     }
 
+    @Override
     public void addPropertyChangeListener(PropertyChangeListener l) {
         pcs.addPropertyChangeListener(l);
     }
 
+    @Override
     public void removePropertyChangeListener(PropertyChangeListener l) {
         pcs.removePropertyChangeListener(l);
     }
     
-    public String getRoot(){
-        return this.rootpath;
-    }
-    
-    public void setRoot(String newRoot){
-        String oldRoot = this.rootpath;
-        this.rootpath = newRoot;
-        pcs.firePropertyChange("root", oldRoot, newRoot);
-    }
-
     private BittlePanel getPanel() {
         if (panel == null) {
             panel = new BittlePanel(this, this.connection);
