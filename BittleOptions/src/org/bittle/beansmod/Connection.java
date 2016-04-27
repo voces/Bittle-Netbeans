@@ -1,7 +1,9 @@
 package org.bittle.beansmod;
 
+import com.eclipsesource.json.*;
 import java.net.URI;
 import java.util.concurrent.Future;
+import javax.swing.JOptionPane;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -54,7 +56,42 @@ public class Connection {
     public void onMessage(String msg)
     {
         LOG.info("onMessage() - {}", msg);
+        
+        // Parse the message as a JSON object
+        JsonObject response = Json.parse(msg).asObject();
+        
+        // Get the 'id' field of the JSON object 
+        String id = response.getString("id", null);
+        
         //big switch statement goes here based on the response's id
+        switch(id.toLowerCase()){
+            case "register":
+                break;
+            case "login":
+                // If the message is a log in message
+                // Check the status of the login 
+                String status = response.getString("status", null);
+                if(status.equals("failed"))
+                    JOptionPane.showMessageDialog(null, response.getString("reason", "failwhale"));
+                break;
+            case "logout":
+                break;
+            case "createfile":
+                break;
+            case "deletefile":
+                break;
+            case "insert":
+                break;
+            case "erase":
+                break;
+            case "lines":
+                break;
+            case "line":
+                break;
+            default:
+                // is this even possible?
+                break;
+        }
         
         //on the message responding to an editor change, check awaitingServerResponseForEdit flag; true = don't update, false = update
         //not the best solution because this client won't get any editor updates until getting a response from the server?

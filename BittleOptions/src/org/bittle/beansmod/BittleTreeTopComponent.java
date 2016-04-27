@@ -24,7 +24,6 @@ import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
 import org.openide.loaders.DataObjectNotFoundException;
 import org.openide.windows.TopComponent;
-import org.openide.util.NbBundle.Messages;
 import org.openide.util.NbPreferences;
 
 /**
@@ -43,14 +42,9 @@ import org.openide.util.NbPreferences;
 @ActionID(category = "Window", id = "org.bittle.beansmod.BittleTreeTopComponent")
 @ActionReference(path = "Menu/Window" /*, position = 333 */)
 @TopComponent.OpenActionRegistration(
-        displayName = "#CTL_BittleTreeAction",
+        displayName = "BittleFiles",
         preferredID = "BittleTree"
 )
-@Messages({
-    "CTL_BittleTreeAction=BittleFiles",
-    "CTL_BittleTreeTopComponent=Bittle Files",
-    "HINT_BittleTreeTopComponent=This is your current Bittle directory"
-})
 public final class BittleTreeTopComponent extends TopComponent {
     
     private Boolean loggedIn;
@@ -61,8 +55,8 @@ public final class BittleTreeTopComponent extends TopComponent {
         syncList = SyncList.getInstance();
         initComponents();
         treePopup = new TreePopup(fileTree, treeModel);
-        setName(Bundle.CTL_BittleTreeTopComponent());
-        setToolTipText(Bundle.HINT_BittleTreeTopComponent());   
+        setName("Bittle Files");
+        setToolTipText("These are the files being synced by Bittle");   
     }
     /**
      * This method is called from within the constructor to initialize the form.
@@ -210,19 +204,25 @@ public final class BittleTreeTopComponent extends TopComponent {
     }//GEN-LAST:event_addButtonActionPerformed
 
     private void fileTreeMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_fileTreeMouseClicked
+        
+        // Get the selected row
         int row = fileTree.getClosestRowForLocation(evt.getX(), evt.getY());
         fileTree.setSelectionRow(row);
-        
-        // If the user right clicked
-        if (SwingUtilities.isRightMouseButton(evt))
-            treePopup.show(evt.getComponent(), evt.getX(), evt.getY());
-        
-        // If the user double clicked
-        else if(evt.getClickCount() == 2){
-            TreePath selection = fileTree.getSelectionPath();
-            if(selection != null){
-                DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode)selection.getLastPathComponent();
-                if(!selectedNode.getUserObject().equals("Bittle Files")){
+        TreePath selection = fileTree.getSelectionPath();
+        if(selection != null){
+            
+            // Get the selected node
+            DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode)selection.getLastPathComponent();
+            
+            // If it is not the root node
+            if(!selectedNode.getUserObject().equals("Bittle Files")){
+                
+                // If the user right clicked, show the pop up menu
+                if (SwingUtilities.isRightMouseButton(evt))
+                    treePopup.show(evt.getComponent(), evt.getX(), evt.getY());
+                
+                // Otherwise, open the file they clicked on
+                else if (evt.getClickCount() == 2){
                     FileObject fo = FileUtil.toFileObject(FileUtil.normalizeFile(new File(SyncList.getBittleFilePath((String)selectedNode.getUserObject()))));
                     try {
                         DataObject.find(fo).getLookup().lookup(OpenCookie.class).open();
