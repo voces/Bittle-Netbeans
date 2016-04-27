@@ -43,10 +43,10 @@ public class Installer extends org.openide.modules.ModuleInstall implements Runn
     public void run() {
 
         connection = Connection.getInstance();
-        connection.connect("wss://notextures.io:8086");
+//        connection.connect("wss://notextures.io:8086");
 //        connection.clean();
 //        connection.register("temp_evan", "tacosaregreat");
-        connection.login("temp_evan", "tacosaregreat");
+//        connection.login("temp_evan", "tacosaregreat");
 
         PropertyChangeListener l = new PropertyChangeListener() {
             @Override

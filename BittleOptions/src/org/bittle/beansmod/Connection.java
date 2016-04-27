@@ -3,7 +3,6 @@ package org.bittle.beansmod;
 import com.eclipsesource.json.*;
 import java.net.URI;
 import java.util.concurrent.Future;
-import javax.swing.JOptionPane;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -20,6 +19,7 @@ public class Connection {
     
     //singleton
     private static final Connection instance;
+    public static JsonObject response = null;
     
     static {
         instance = new Connection();
@@ -57,22 +57,29 @@ public class Connection {
     {
         LOG.info("onMessage() - {}", msg);
         
+        //System.out.println("============onMessage called!==========");
+        
         // Parse the message as a JSON object
-        JsonObject response = Json.parse(msg).asObject();
+        response = Json.parse(msg).asObject();
         
         // Get the 'id' field of the JSON object 
         String id = response.getString("id", null);
         
+        //System.out.println("============id is " + id + "=============");
+        
         //big switch statement goes here based on the response's id
+        // Do we really need a switch statement here?
+        // We can just send the JSON response to whoever is expecting it 
         switch(id.toLowerCase()){
             case "register":
                 break;
             case "login":
                 // If the message is a log in message
                 // Check the status of the login 
-                String status = response.getString("status", null);
-                if(status.equals("failed"))
-                    JOptionPane.showMessageDialog(null, response.getString("reason", "failwhale"));
+               // String status = response.getString("status", null);
+                //if(status.equals("failed")){
+                  //  System.out.println(response.getString("reason", "failwhale"));
+                //}
                 break;
             case "logout":
                 break;
@@ -95,7 +102,7 @@ public class Connection {
         
         //on the message responding to an editor change, check awaitingServerResponseForEdit flag; true = don't update, false = update
         //not the best solution because this client won't get any editor updates until getting a response from the server?
-        //might be able to get around this if the server's messages for line changes have something that tells us an update is from another client
+        //might be able to get around this if the server's messages for line changes have something that tells us an update is from another client  
     }
     
     public void connect(String url) {
@@ -124,6 +131,7 @@ public class Connection {
     }
     
     private void sendMessage(String message) {
+        response = null;
         try {
             session.getRemote().sendString(message);
         }

@@ -12,8 +12,11 @@ import static java.nio.file.StandardCopyOption.*;
 import static java.nio.file.StandardOpenOption.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.util.Exceptions;
 import org.openide.util.NbPreferences;
 import org.openide.windows.WindowManager;
@@ -309,28 +312,57 @@ final class BittlePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_RegisterCheckboxActionPerformed
 
     private void LoginButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LoginButtonActionPerformed
-        
-        // Do log in validation
+        // Do clilent side log in validation
         // If log in was invalid, do nothing
         if(!validLogin())
             return;
         
+        connection.connect(serverName);
         // Update the username and password with the input
         username = UsernameField.getText();
         password = PasswordField.getText();
-        //connection.connect(serverName);
         
         // If the user wants to register, do that
-        if(RegisterCheckbox.isSelected()){
-            // TODO: Handle Register Code here
+        if(RegisterCheckbox.isSelected())
             connection.register(username, password);
-            JOptionPane.showMessageDialog(LogInPanel, "Thanks for signing up, " + username , "Welcome To Bittle!!!", JOptionPane.PLAIN_MESSAGE);
-        }
         // Otherwise do the log in stuff
-        else{
-            // TODO: Check that the account actually exists in the database
+        else
             connection.login(username, password);
-            JOptionPane.showMessageDialog(LogInPanel, "Welcome Back, " + username , "Welcome To Bittle!!!", JOptionPane.PLAIN_MESSAGE);
+            
+        // Wait for the server response
+        // Is this the best way of doing it?
+        while(Connection.response == null)
+            try {
+                TimeUnit.MILLISECONDS.sleep(100);
+            } catch (InterruptedException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        
+        String id = Connection.response.getString("id", null);
+        if(id.equals("login")){
+            String status = Connection.response.getString("status", null);
+            if(status.equals("failed")){
+                NotifyDescriptor nd = new NotifyDescriptor.Message(Connection.response.getString("reason", "Login Failed"), NotifyDescriptor.ERROR_MESSAGE);
+                DialogDisplayer.getDefault().notify(nd);
+                return;
+            }
+            else{
+                NotifyDescriptor nd = new NotifyDescriptor.Message("Welcome Back, " + username, NotifyDescriptor.INFORMATION_MESSAGE);
+                DialogDisplayer.getDefault().notify(nd);
+            }
+        }
+        else if(id.equals("register")){
+            String status = Connection.response.getString("status", null);
+            if(status.equals("failed")){
+                NotifyDescriptor nd = new NotifyDescriptor.Message(Connection.response.getString("reason", "Register Failed"), NotifyDescriptor.ERROR_MESSAGE);
+                DialogDisplayer.getDefault().notify(nd);
+                return; 
+            }
+            else{
+                NotifyDescriptor nd = new NotifyDescriptor.Message("Thanks for signing up, " + username, NotifyDescriptor.INFORMATION_MESSAGE);
+                DialogDisplayer.getDefault().notify(nd);
+                connection.login(username, password);
+            }
         }
         
         // Set the log in flag to true
