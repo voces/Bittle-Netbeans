@@ -5,13 +5,10 @@
  */
 package org.bittle.beansmod;
 
-import java.util.List;
 import java.io.IOException;
 import java.nio.file.*;
 import static java.nio.file.StandardCopyOption.*;
-import static java.nio.file.StandardOpenOption.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -32,13 +29,13 @@ final class BittlePanel extends javax.swing.JPanel {
     private String username = "";
     private String password = "";
     private String rootpath = System.getProperty("user.home") + "\\Bittle";
-    private Boolean LoggedIn = false;
+    private boolean loggedIn = false;
 
     BittlePanel(BittleOptionsPanelController controller, Connection connection) {
         this.controller = controller;
         this.connection = connection;
         this.fileTree = (BittleTreeTopComponent) WindowManager.getDefault().findTopComponent("BittleTree");
-        syncList = SyncList.getInstance();
+        this.syncList = SyncList.getInstance();
         
         store();
         initComponents();
@@ -157,6 +154,7 @@ final class BittlePanel extends javax.swing.JPanel {
         CurrentDirectoryField.setText(org.openide.util.NbBundle.getMessage(BittlePanel.class, "BittlePanel.CurrentDirectoryField.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(BrowseButton, org.openide.util.NbBundle.getMessage(BittlePanel.class, "BittlePanel.BrowseButton.text")); // NOI18N
+        BrowseButton.setToolTipText(org.openide.util.NbBundle.getMessage(BittlePanel.class, "BittlePanel.BrowseButton.toolTipText")); // NOI18N
         BrowseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 BrowseButtonActionPerformed(evt);
@@ -333,7 +331,7 @@ final class BittlePanel extends javax.swing.JPanel {
         // Is this the best way of doing it?
         while(Connection.response == null)
             try {
-                TimeUnit.MILLISECONDS.sleep(100);
+                TimeUnit.MILLISECONDS.sleep(50);
             } catch (InterruptedException ex) {
                 Exceptions.printStackTrace(ex);
             }
@@ -366,7 +364,7 @@ final class BittlePanel extends javax.swing.JPanel {
         }
         
         // Set the log in flag to true
-        LoggedIn = true;
+        loggedIn = true;
         
         // Try to create the bittle directory
         // If it already exists, rootpath will be updated
@@ -403,7 +401,7 @@ final class BittlePanel extends javax.swing.JPanel {
 
     void logout(){
         connection.logout();
-        LoggedIn = false;
+        loggedIn = false;
         username = "";
         password = "";
         store();
@@ -419,7 +417,7 @@ final class BittlePanel extends javax.swing.JPanel {
         NbPreferences.forModule(BittlePanel.class).put("username", username);
         NbPreferences.forModule(BittlePanel.class).put("password", password);
         NbPreferences.forModule(BittlePanel.class).put("rootpath", rootpath);
-        NbPreferences.forModule(BittlePanel.class).putBoolean("status", LoggedIn);
+        NbPreferences.forModule(BittlePanel.class).putBoolean("status", loggedIn);
         SyncList.bittlePath = rootpath;
     }
 
@@ -519,43 +517,5 @@ final class BittlePanel extends javax.swing.JPanel {
         
         // Delete the old bittle folder
         Files.delete(oldBittleFolder);
-    }
-    
-    /**
-     * Converts a file at a given path into an array of strings
-     * @param filePath String - Where the file to be converted resides
-     * @return - An array of strings containing the lines in the file
-     */
-    private String[] deconstructFile(String filePath) throws IOException{
-        
-        // Get the path of the file to be deconstructed
-        Path file = Paths.get(filePath);
-        
-        // Read the lines of the file into a list
-        List<String> lines = Files.readAllLines(file);
-        
-        // Convert that list into an array
-        String[] linesArray = lines.toArray(new String[lines.size()]);
-        
-        return linesArray;
-    }
-    
-    /**
-     * Constructs a file from an array of Strings.
-     * If the file already exists, the array of Strings will be written to it.
-     * @param filename String - Name of the file to be created
-     * @param lines String[] - Array of lines to be written to the file
-     */
-    private void constructFile(String filename, String[] lines) throws IOException{
-       
-        // Put the file in the current bittle directory
-        Path filePath = Paths.get(rootpath + "\\" + filename);
-        
-        // Convert the array of Strings into an iterable list
-        Iterable<String> lineList = Arrays.asList(lines);
-        
-        // Write the lines to the file
-        // The CREATE flag creates the file if it doesn't exist
-        Files.write(filePath, lineList, CREATE);
     }
 }

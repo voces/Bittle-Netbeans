@@ -57,13 +57,14 @@ public class Connection {
     {
         LOG.info("onMessage() - {}", msg);
         
-        //System.out.println("============onMessage called!==========");
-        
+        System.out.println("============onMessage called!==========");
+        System.out.println(msg);
+        System.out.println("=======================================");
         // Parse the message as a JSON object
-        response = Json.parse(msg).asObject();
+        JsonObject jsonMessage = Json.parse(msg).asObject();
         
         // Get the 'id' field of the JSON object 
-        String id = response.getString("id", null);
+        String id = jsonMessage.getString("id", null);
         
         //System.out.println("============id is " + id + "=============");
         
@@ -72,28 +73,16 @@ public class Connection {
         // We can just send the JSON response to whoever is expecting it 
         switch(id.toLowerCase()){
             case "register":
-                break;
             case "login":
-                // If the message is a log in message
-                // Check the status of the login 
-               // String status = response.getString("status", null);
-                //if(status.equals("failed")){
-                  //  System.out.println(response.getString("reason", "failwhale"));
-                //}
-                break;
             case "logout":
+            case "track":
+            case "invite":
+                response = jsonMessage;
                 break;
-            case "createfile":
-                break;
-            case "deletefile":
-                break;
-            case "insert":
-                break;
-            case "erase":
-                break;
+            case "addfile":
             case "lines":
-                break;
             case "line":
+                // absorb response for now
                 break;
             default:
                 // is this even possible?
@@ -232,5 +221,19 @@ public class Connection {
     
     public void line(String filename, int lineIndex, int start, int deleteCount, String line) {
         sendMessage("{\"id\":\"line\", \"filename\":\"" + filename + "\", \"lineIndex\":" + lineIndex + ", \"start\":" + start + ", \"deleteCount\": " + deleteCount +  ", \"line\":" + line + "}");
+    }
+    
+    //update: 4/27/16
+    public void track(String filename, String[] lines){
+        JsonObject file = Json.object().add("id", "track").add("filename", filename);
+        JsonArray linesArray = Json.array(lines);
+        file.add("lines", linesArray);
+        
+        sendMessage(file.toString());
+    }
+    
+    public void invite(String username){
+        JsonObject invitation = Json.object().add("id", "invite").add("name", username);
+        sendMessage(invitation.toString());
     }
 }

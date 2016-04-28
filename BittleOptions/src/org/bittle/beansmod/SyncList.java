@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.bittle.beansmod;
 
 import java.io.File;
@@ -10,14 +5,21 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import static java.nio.file.StandardOpenOption.CREATE;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
+import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
 
 /**
  * A Singleton HashSet that holds Strings
  * Will contain the names of all the files currently being synced
  * Also maintains the contents of the Bittle directory 
+ * As well as GUI file tree
  */
 public class SyncList extends HashSet<String> {
     
@@ -25,12 +27,14 @@ public class SyncList extends HashSet<String> {
     private static final BittleTreeTopComponent fileTree;
     public static String bittlePath;
     
+    private final Connection connection;
+    // Initialize the instance and get the GUI tree
     static{
         instance = new SyncList();
         fileTree = (BittleTreeTopComponent) WindowManager.getDefault().findTopComponent("BittleTree");
     }
     
-    private SyncList(){}
+    private SyncList() {connection = Connection.getInstance();}
     
     public static SyncList getInstance(){
         return instance;
@@ -43,7 +47,7 @@ public class SyncList extends HashSet<String> {
      * @param filePath path of the new file to be added
      * @return true if the file was added, false otherwise
      */
-    public static void addNewFile(String filePath) throws IOException{
+    public void addFile(String filePath) throws IOException{
         String fileName = getFileName(filePath);
         if(!instance.contains(fileName)){
             instance.add(fileName);
@@ -60,9 +64,42 @@ public class SyncList extends HashSet<String> {
      * This should be handled after calling this function
      * @param fileName name of the file to be removed
      */
-    public static void removeFile(String fileName) throws IOException{
+    public void removeFile(String fileName) throws IOException{
         Files.deleteIfExists(Paths.get(getBittleFilePath(fileName)));
         instance.remove(fileName);
+    }
+    
+    public boolean trackFile(String fileName){
+        boolean tracked = false;
+        
+        String filePath = getBittleFilePath(fileName);
+        try {
+            String[] lines = fileToStringArray(filePath);
+            connection.track(filePath, lines);
+            
+            // Wait for response from the server
+            while(Connection.response == null)
+                try {
+                    TimeUnit.MILLISECONDS.sleep(50);
+                } catch (InterruptedException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+            
+            if(Connection.response.getString("id", null).equals("track")){
+                if(Connection.response.getString("status", null).equals("failed")){
+                    NotifyDescriptor nd = new NotifyDescriptor.Message(Connection.response.getString("reason", "Tracking Failed"), NotifyDescriptor.ERROR_MESSAGE);
+                    DialogDisplayer.getDefault().notify(nd);
+                }
+                else{
+                    tracked = true;
+                    NotifyDescriptor nd = new NotifyDescriptor.Message("Sharing " + fileName, NotifyDescriptor.INFORMATION_MESSAGE);
+                    DialogDisplayer.getDefault().notify(nd);
+                }
+            }
+        } catch (IOException ex) {
+        }
+        
+        return tracked;
     }
     
     /**
@@ -102,17 +139,55 @@ public class SyncList extends HashSet<String> {
      * @param filePath path of desired file name
      * @return tring - name of file at given path
      */
-    private static String getFileName(String filePath) {
-        return filePath.substring(filePath.lastIndexOf("\\")+1);
+    private String getFileName(String filePath) {
+        return Paths.get(filePath).getFileName().toString();
     }
     
     /**
      * Copies the file at the given path to the Bittle directory
      * @param filePath path of the file to be copied
      */
-    private static void addFileToFolder(String filePath) throws IOException {
+    private void addFileToFolder(String filePath) throws IOException {
         Path from = Paths.get(filePath);
         Path to = Paths.get(getBittleFilePath(getFileName(filePath)));
         Files.copy(from, to);
+    }
+    
+    /**
+     * Converts a file at a given path into an array of strings
+     * @param filePath String - Where the file to be converted resides
+     * @return - An array of strings containing the lines in the file
+     */
+    public static String[] fileToStringArray(String filePath) throws IOException{
+        
+        // Get the path of the file to be deconstructed
+        Path file = Paths.get(filePath);
+        
+        // Read the lines of the file into a list
+        List<String> lines = Files.readAllLines(file);
+        
+        // Convert that list into an array
+        String[] linesArray = lines.toArray(new String[lines.size()]);
+        
+        return linesArray;
+    }
+    
+    /**
+     * Constructs a file from an array of Strings.
+     * If the file already exists, the array of Strings will be written to it.
+     * @param filename String - Name of the file to be created
+     * @param lines String[] - Array of lines to be written to the file
+     */
+    public void constructFile(String filename, String[] lines) throws IOException{
+       
+        // Put the file in the current bittle directory
+        Path filePath = Paths.get(bittlePath + "\\" + filename);
+        
+        // Convert the array of Strings into an iterable list
+        Iterable<String> lineList = Arrays.asList(lines);
+        
+        // Write the lines to the file
+        // The CREATE flag creates the file if it doesn't exist
+        Files.write(filePath, lineList, CREATE);
     }
 }

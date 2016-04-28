@@ -7,6 +7,7 @@ package org.bittle.beansmod;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.prefs.Preferences;
 import javax.swing.JFileChooser;
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
@@ -36,7 +37,7 @@ import org.openide.util.NbPreferences;
 @TopComponent.Description(
         preferredID = "BittleTree",
         iconBase = "org/bittle/beansmod/BittleLogo16.png",
-        persistenceType = TopComponent.PERSISTENCE_ALWAYS
+        persistenceType = TopComponent.PERSISTENCE_NEVER
 )
 @TopComponent.Registration(mode = "explorer", openAtStartup = false)
 @ActionID(category = "Window", id = "org.bittle.beansmod.BittleTreeTopComponent")
@@ -47,12 +48,14 @@ import org.openide.util.NbPreferences;
 )
 public final class BittleTreeTopComponent extends TopComponent {
     
-    private Boolean loggedIn;
+    private Preferences loginState = NbPreferences.forModule(BittlePanel.class);
+    private boolean loggedIn;
     private final TreePopup treePopup;
     private final SyncList syncList;
 
     public BittleTreeTopComponent() {
         syncList = SyncList.getInstance();
+        loggedIn = loginState.getBoolean("status", false);
         initComponents();
         treePopup = new TreePopup(fileTree, treeModel);
         setName("Bittle Files");
@@ -197,7 +200,7 @@ public final class BittleTreeTopComponent extends TopComponent {
         if(choice == JFileChooser.APPROVE_OPTION){
             String filePath = fileChooser.getSelectedFile().toString();
             try {
-                SyncList.addNewFile(filePath);
+                syncList.addFile(filePath);
             } catch (IOException ex) {
             }
         }
@@ -279,8 +282,7 @@ public final class BittleTreeTopComponent extends TopComponent {
      * - Otherwise, displays the not logged in screen
      */
     public void updateTree(){
-        loggedIn = NbPreferences.forModule(BittlePanel.class).getBoolean("status", false);
-        
+        loggedIn = loginState.getBoolean("status", false);
         if(loggedIn){
             SyncList.scanFolder();
             treeModel.reload();
