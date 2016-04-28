@@ -1,5 +1,6 @@
 package org.bittle.beansmod;
 
+import com.eclipsesource.json.JsonObject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -38,6 +39,18 @@ public class SyncList extends HashSet<String> {
     
     public static SyncList getInstance(){
         return instance;
+    }
+    
+    public static boolean checkResponse(JsonObject response, String id){
+        if(response.getString("id", null).equals(id)){
+            if(Connection.response.getString("status", null).equals("failed")){
+                NotifyDescriptor nd = new NotifyDescriptor.Message(Connection.response.getString("reason", "Operation Failed"), NotifyDescriptor.ERROR_MESSAGE);
+                DialogDisplayer.getDefault().notify(nd);
+                return false;
+            }
+            return true;
+        }
+        return false;
     }
     
     /**
