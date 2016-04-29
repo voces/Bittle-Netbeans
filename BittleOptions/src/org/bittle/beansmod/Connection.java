@@ -3,7 +3,6 @@ package org.bittle.beansmod;
 import com.eclipsesource.json.*;
 import java.net.URI;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -16,7 +15,6 @@ import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
-import org.openide.util.Exceptions;
 
 @WebSocket
 public class Connection {
@@ -36,7 +34,7 @@ public class Connection {
     }
     
     private static final Logger LOG = Log.getLogger(Connection.class);
-    private static Session session;
+    private static Session session = null;
     
     @OnWebSocketConnect
     public void onConnect(Session sess)
@@ -64,6 +62,7 @@ public class Connection {
         System.out.println("============onMessage called!==========");
         System.out.println(msg);
         System.out.println("=======================================");
+        
         // Parse the message as a JSON object
         JsonObject jsonMessage = Json.parse(msg).asObject();
         
@@ -81,15 +80,13 @@ public class Connection {
             case "logout":
             case "track":
             case "invite":
-                response = jsonMessage;
-                break;
+            case "changepass":
             case "addfile":
             case "lines":
             case "line":
-                // absorb response for now
-                break;
+                response = jsonMessage;
             default:
-                // is this even possible?
+                // absorb other responses for now
                 break;
         }
         
@@ -120,7 +117,8 @@ public class Connection {
     }
     
     public void close() {
-        session.close();
+        if(session != null)
+            session.close();
     }
     
     /**

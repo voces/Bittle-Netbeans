@@ -10,7 +10,6 @@ import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import static org.bittle.beansmod.Connection.response;
 import org.openide.*;
 
 /**
@@ -47,7 +46,7 @@ public class TreePopup extends JPopupMenu{
                 connection.invite(userName);
                 
                 // Wait for response from the server
-                while(response == null)
+                while(Connection.response == null)
                     try {
                         TimeUnit.MILLISECONDS.sleep(50);
                     } catch (InterruptedException ex) {

@@ -17,8 +17,11 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import org.netbeans.api.options.OptionsDisplayer;
 import org.netbeans.api.settings.ConvertAsProperties;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
+import org.openide.awt.ActionReferences;
 import org.openide.cookies.OpenCookie;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -26,6 +29,8 @@ import org.openide.loaders.DataObject;
 import org.openide.loaders.DataObjectNotFoundException;
 import org.openide.windows.TopComponent;
 import org.openide.util.NbPreferences;
+import org.openide.windows.Mode;
+import org.openide.windows.WindowManager;
 
 /**
  * Top component which displays something.
@@ -41,7 +46,10 @@ import org.openide.util.NbPreferences;
 )
 @TopComponent.Registration(mode = "explorer", openAtStartup = false)
 @ActionID(category = "Window", id = "org.bittle.beansmod.BittleTreeTopComponent")
-@ActionReference(path = "Menu/Window" /*, position = 333 */)
+@ActionReferences({
+    @ActionReference(path = "Menu/Window" /*, position = 333 */),
+    @ActionReference(path = "Shortcuts", name = "D-B")
+})
 @TopComponent.OpenActionRegistration(
         displayName = "BittleFiles",
         preferredID = "BittleTree"
@@ -51,15 +59,22 @@ public final class BittleTreeTopComponent extends TopComponent {
     private Preferences loginState = NbPreferences.forModule(BittlePanel.class);
     private boolean loggedIn;
     private final TreePopup treePopup;
-    private final SyncList syncList;
+    private SyncList syncList = SyncList.getInstance();
 
     public BittleTreeTopComponent() {
-        syncList = SyncList.getInstance();
-        loggedIn = loginState.getBoolean("status", false);
         initComponents();
         treePopup = new TreePopup(fileTree, treeModel);
         setName("Bittle Files");
         setToolTipText("These are the files being synced by Bittle");   
+    }
+    
+    public void open() {
+        Mode m = WindowManager.getDefault().findMode ("explorer");
+        if (m != null) {
+            m.dockInto(this);
+        }
+        super.open();
+        updateTree();
     }
     /**
      * This method is called from within the constructor to initialize the form.
@@ -73,6 +88,7 @@ public final class BittleTreeTopComponent extends TopComponent {
         addButton = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         fileTree = new javax.swing.JTree();
+        RemoveAllButton = new javax.swing.JButton();
         NotLoggedInScreen = new javax.swing.JPanel();
         FlipGuy = new javax.swing.JLabel();
         NotLoggedInMessage = new javax.swing.JLabel();
@@ -97,6 +113,13 @@ public final class BittleTreeTopComponent extends TopComponent {
         });
         jScrollPane1.setViewportView(fileTree);
 
+        org.openide.awt.Mnemonics.setLocalizedText(RemoveAllButton, org.openide.util.NbBundle.getMessage(BittleTreeTopComponent.class, "BittleTreeTopComponent.RemoveAllButton.text")); // NOI18N
+        RemoveAllButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                RemoveAllButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout LoggedInScreenLayout = new javax.swing.GroupLayout(LoggedInScreen);
         LoggedInScreen.setLayout(LoggedInScreenLayout);
         LoggedInScreenLayout.setHorizontalGroup(
@@ -107,6 +130,8 @@ public final class BittleTreeTopComponent extends TopComponent {
                     .addGroup(LoggedInScreenLayout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(addButton)
+                        .addGap(18, 18, 18)
+                        .addComponent(RemoveAllButton)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 276, Short.MAX_VALUE))
                 .addContainerGap())
@@ -117,7 +142,9 @@ public final class BittleTreeTopComponent extends TopComponent {
                 .addContainerGap()
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 283, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addComponent(addButton)
+                .addGroup(LoggedInScreenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(addButton)
+                    .addComponent(RemoveAllButton))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -140,15 +167,10 @@ public final class BittleTreeTopComponent extends TopComponent {
             NotLoggedInScreenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(NotLoggedInScreenLayout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(FlipGuy)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, NotLoggedInScreenLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(NotLoggedInMessage)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(NotLoggedInScreenLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(ToOptionsButton)
+                .addGroup(NotLoggedInScreenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(FlipGuy)
+                    .addComponent(NotLoggedInMessage)
+                    .addComponent(ToOptionsButton))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         NotLoggedInScreenLayout.setVerticalGroup(
@@ -224,10 +246,12 @@ public final class BittleTreeTopComponent extends TopComponent {
                 if (SwingUtilities.isRightMouseButton(evt))
                     treePopup.show(evt.getComponent(), evt.getX(), evt.getY());
                 
-                // Otherwise, open the file they clicked on
+                // Otherwise
                 else if (evt.getClickCount() == 2){
-                    FileObject fo = FileUtil.toFileObject(FileUtil.normalizeFile(new File(SyncList.getBittleFilePath((String)selectedNode.getUserObject()))));
+                    // Get the file object from the selected node
+                    FileObject fo = FileUtil.toFileObject(FileUtil.normalizeFile(new File(syncList.getBittleFilePath((String)selectedNode.getUserObject()))));
                     try {
+                        // Open it
                         DataObject.find(fo).getLookup().lookup(OpenCookie.class).open();
                     } catch (DataObjectNotFoundException ex) {
                     }
@@ -239,12 +263,32 @@ public final class BittleTreeTopComponent extends TopComponent {
     private void ToOptionsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ToOptionsButtonActionPerformed
         OptionsDisplayer.getDefault().open("BittleOptions");
     }//GEN-LAST:event_ToOptionsButtonActionPerformed
+
+    private void RemoveAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RemoveAllButtonActionPerformed
+        NotifyDescriptor d = new NotifyDescriptor.Confirmation("This will completely remove all the files being synced from your computer!", 
+                                                               "Are you sure?",
+                                                               NotifyDescriptor.OK_CANCEL_OPTION);
+        
+        if (DialogDisplayer.getDefault().notify(d) == NotifyDescriptor.OK_OPTION) {
+            if(syncList.isEmpty()){
+                NotifyDescriptor nd = new NotifyDescriptor.Message("Nothing to Remove...", NotifyDescriptor.WARNING_MESSAGE);
+                DialogDisplayer.getDefault().notify(nd);
+            }
+            else
+                try {
+                    clearFiles();
+                } catch (IOException ex) {
+                }
+        }
+
+    }//GEN-LAST:event_RemoveAllButtonActionPerformed
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel FlipGuy;
     private javax.swing.JPanel LoggedInScreen;
     private javax.swing.JLabel NotLoggedInMessage;
     private javax.swing.JPanel NotLoggedInScreen;
+    private javax.swing.JButton RemoveAllButton;
     private javax.swing.JButton ToOptionsButton;
     private javax.swing.JButton addButton;
     private javax.swing.JTree fileTree;
@@ -284,7 +328,9 @@ public final class BittleTreeTopComponent extends TopComponent {
     public void updateTree(){
         loggedIn = loginState.getBoolean("status", false);
         if(loggedIn){
-            SyncList.scanFolder();
+            if(syncList == null)
+                syncList = SyncList.getInstance();
+            syncList.scanFolder();
             treeModel.reload();
             LoggedInScreen.setVisible(true);
             NotLoggedInScreen.setVisible(false);
@@ -292,12 +338,15 @@ public final class BittleTreeTopComponent extends TopComponent {
         else{
             NotLoggedInScreen.setVisible(true);
             LoggedInScreen.setVisible(false);
+            NotLoggedInScreen.requestFocusInWindow();
+            ToOptionsButton.requestFocusInWindow();
         }
     }
-   private void clearFiles(){
+    
+   private void clearFiles() throws IOException{
        rootNode.removeAllChildren();
+       syncList.clearList();
        treeModel.reload();
-       // TODO: Remove everything from everywhere
    }
    
    public DefaultMutableTreeNode addObject(Object child){

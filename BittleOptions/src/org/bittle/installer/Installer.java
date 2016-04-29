@@ -32,11 +32,12 @@ public class Installer extends org.openide.modules.ModuleInstall implements Runn
         WindowManager manager = WindowManager.getDefault();
         manager.invokeWhenUIReady(this);
     }
-
+    
     @Override
-    public void close() {
+    public boolean closing() {
         BittleOptionsPanelController.getInstance().logOut();
         connection.close();
+        return true;
     }
 
     @Override

@@ -12,6 +12,7 @@ import javax.swing.SwingUtilities;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
+import org.openide.util.NbPreferences;
 
 @OptionsPanelController.TopLevelRegistration(
         categoryName = "#OptionsCategory_Name_Bittle",
@@ -42,6 +43,10 @@ public final class BittleOptionsPanelController extends OptionsPanelController {
     
     public void logOut(){
         getPanel().logout();
+    }
+    
+    public boolean loggedIn(){
+        return NbPreferences.forModule(BittlePanel.class).getBoolean("status", false);
     }
 
     @Override

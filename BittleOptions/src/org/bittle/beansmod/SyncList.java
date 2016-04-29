@@ -8,11 +8,15 @@ import java.nio.file.Paths;
 import static java.nio.file.StandardOpenOption.CREATE;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import static org.bittle.beansmod.Connection.response;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
+import org.openide.cookies.OpenCookie;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
+import org.openide.loaders.DataObject;
 import org.openide.windows.WindowManager;
 
 /**
@@ -24,18 +28,20 @@ import org.openide.windows.WindowManager;
 public class SyncList extends HashSet<String> {
     
     private static final SyncList instance;
-    private static final BittleTreeTopComponent fileTree;
-    private static final Connection connection;
+    private final BittleTreeTopComponent fileTree;
+    private final Connection connection;
     public static String bittlePath;
     
     // Initialize the instance and get the GUI tree
     static{
         instance = new SyncList();
+
+    }
+    
+    private SyncList() {
         fileTree = (BittleTreeTopComponent) WindowManager.getDefault().findTopComponent("BittleTree");
         connection = Connection.getInstance();
     }
-    
-    private SyncList() {}
     
     public static SyncList getInstance(){
         return instance;
@@ -50,11 +56,15 @@ public class SyncList extends HashSet<String> {
      */
     public void addFile(String filePath) throws IOException{
         String fileName = getFileName(filePath);
-        if(!instance.contains(fileName)){
-            instance.add(fileName);
+        if(!this.contains(fileName)){
+            this.add(fileName);
             addFileToFolder(filePath);
             fileTree.addObject(fileName);
             trackFile(fileName);
+        }
+        else{
+            NotifyDescriptor nd = new NotifyDescriptor.Message(fileName + " already being synced!", NotifyDescriptor.ERROR_MESSAGE);
+            DialogDisplayer.getDefault().notify(nd);
         }
     }
     
@@ -67,44 +77,38 @@ public class SyncList extends HashSet<String> {
      * @param fileName name of the file to be removed
      */
     public void removeFile(String fileName) throws IOException{
-        Files.deleteIfExists(Paths.get(getBittleFilePath(fileName)));
-        instance.remove(fileName);
+        FileObject fo = FileUtil.toFileObject(FileUtil.normalizeFile(new File(getBittleFilePath(fileName))));
+        if(!fo.isLocked()){
+            Files.deleteIfExists(Paths.get(getBittleFilePath(fileName)));
+            this.remove(fileName);
+        }
+        else{
+            NotifyDescriptor nd = new NotifyDescriptor.Message("Can not remove locked file " + fileName, NotifyDescriptor.ERROR_MESSAGE);
+            DialogDisplayer.getDefault().notify(nd);
+        }
     }
-    
-    private static void trackFile(String fileName){
         
-        String filePath = getBittleFilePath(fileName);
-        try {
-            String[] lines = fileToStringArray(filePath);
-            connection.track(filePath, lines);
-            // Wait for response from the server
-            while(response == null)
-                try {
-                    TimeUnit.MILLISECONDS.sleep(50);
-                } catch (InterruptedException ex) {
-                }
-            if(connection.checkResponse("track")){
-                NotifyDescriptor nd = new NotifyDescriptor.Message("Sharing " + fileName, NotifyDescriptor.INFORMATION_MESSAGE);
-                DialogDisplayer.getDefault().notify(nd);
-            }
-        } catch (IOException ex) {
-        }   
-    }
-    
     /**
      * Scans the current bittle directory
      * Any files that are not in the sync list
      * Are added to the sync list and the file tree
      */
-    public static void scanFolder(){
+    public void scanFolder(){
         String[] filesInBittleFolder = new File(bittlePath).list();
         Iterable<String> fileList = Arrays.asList(filesInBittleFolder);
         for(String fileName : fileList){
-            if(!instance.contains(fileName)){
-                instance.add(fileName);
+            if(!this.contains(fileName)){
+                this.add(fileName);
                 fileTree.addObject(fileName);
                 trackFile(fileName);
             }
+        }
+    }
+    
+    public void clearList() throws IOException{
+        Object[] files = this.toArray();
+        for(int i = 0; i < files.length; i++){
+            this.removeFile((String)files[i]);
         }
     }
     
@@ -115,8 +119,8 @@ public class SyncList extends HashSet<String> {
      * @param fileName file name of the form file.txt
      * @return The path of that file in the Bittle directory, if it exists
      */
-    public static String getBittleFilePath(String fileName){
-        if(instance.contains(fileName)){
+    public String getBittleFilePath(String fileName){
+        if(this.contains(fileName)){
             return bittlePath + "\\" + fileName;
         }
         else
@@ -148,7 +152,7 @@ public class SyncList extends HashSet<String> {
      * @param filePath String - Where the file to be converted resides
      * @return - An array of strings containing the lines in the file
      */
-    public static String[] fileToStringArray(String filePath) throws IOException{
+    private String[] fileToStringArray(String filePath) throws IOException{
         
         // Get the path of the file to be deconstructed
         Path file = Paths.get(filePath);
@@ -168,7 +172,7 @@ public class SyncList extends HashSet<String> {
      * @param filename String - Name of the file to be created
      * @param lines String[] - Array of lines to be written to the file
      */
-    public void constructFile(String filename, String[] lines) throws IOException{
+    private void constructFile(String filename, String[] lines) throws IOException{
        
         // Put the file in the current bittle directory
         Path filePath = Paths.get(bittlePath + "\\" + filename);
@@ -179,5 +183,36 @@ public class SyncList extends HashSet<String> {
         // Write the lines to the file
         // The CREATE flag creates the file if it doesn't exist
         Files.write(filePath, lineList, CREATE);
+    }
+    
+    /**
+     * Sends a file to the server to be tracked
+     * Expects a filename of the form "file.txt"
+     * Grabs the file from the bittle folder
+     * Converts the contents to an array of Strings
+     * Sends the file name and array to the server
+     * Handles the response from the server
+     * @param fileName 
+     */
+    private void trackFile(String fileName){
+        
+        String filePath = getBittleFilePath(fileName);
+        try {
+            String[] lines = fileToStringArray(filePath);
+            connection.track(filePath, lines);
+            
+            // Wait for response from the server
+            while(Connection.response == null)
+                try {
+                    TimeUnit.MILLISECONDS.sleep(50);
+                } catch (InterruptedException ex) {
+                }
+            
+            if(connection.checkResponse("track")){
+                NotifyDescriptor nd = new NotifyDescriptor.Message("Sharing " + fileName, NotifyDescriptor.INFORMATION_MESSAGE);
+                DialogDisplayer.getDefault().notify(nd);
+            }
+        } catch (IOException ex) {
+        }   
     }
 }
