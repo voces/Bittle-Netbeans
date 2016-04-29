@@ -11,8 +11,11 @@ import javax.swing.text.Document;
 import javax.swing.text.Element;
 import javax.swing.text.JTextComponent;
 import org.bittle.beansmod.*;
+import org.bittle.messages.*;
 import org.json.simple.JSONArray;
 import org.netbeans.api.editor.EditorRegistry;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.loaders.DataObject;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
@@ -44,6 +47,12 @@ public class Installer extends org.openide.modules.ModuleInstall implements Runn
     public void run() {
 
         connection = Connection.getInstance();
+        connection.addMessageListener((Message m) -> {
+            if(m instanceof Invitation)
+                handleInvitation((Invitation) m);
+            else if(m instanceof Update)
+                handleUpdate((Update) m);
+        });
 //        connection.connect("wss://notextures.io:8086");
 //        connection.clean();
 //        connection.register("temp_evan", "tacosaregreat");
@@ -131,5 +140,34 @@ public class Installer extends org.openide.modules.ModuleInstall implements Runn
         };
 
         EditorRegistry.addPropertyChangeListener(l);
+    }
+
+    private void handleInvitation(Invitation i) {
+        String inviter = i.getBlame();
+        NotifyDescriptor nd = new NotifyDescriptor.Confirmation(
+                inviter + " has invited you to a share session. \n Do you accept?", 
+                "Invitation Recieved!", 
+                NotifyDescriptor.YES_NO_OPTION, 
+                NotifyDescriptor.QUESTION_MESSAGE
+        );
+        
+        if(DialogDisplayer.getDefault().notify(nd) == NotifyDescriptor.YES_OPTION){
+            connection.accept(inviter, i.getshareID());
+        }
+        else{
+            connection.decline(inviter, i.getshareID());
+        }
+    }
+
+    private void handleUpdate(Update u) {
+        if(u.getID().equals("addFile")){
+            String changer = u.getBlame();
+            String addedFile = u.getChange("fileame");
+            NotifyDescriptor nd = new NotifyDescriptor.Message(
+                    u.getBlame() + " has added " + addedFile + " to the share session"
+                    , NotifyDescriptor.INFORMATION_MESSAGE
+            );
+            DialogDisplayer.getDefault().notify(nd);
+        }
     }
 }

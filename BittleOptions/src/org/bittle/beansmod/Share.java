@@ -8,43 +8,66 @@ import java.nio.file.Paths;
 import static java.nio.file.StandardOpenOption.CREATE;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.bittle.messages.*;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
-import org.openide.cookies.OpenCookie;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
-import org.openide.loaders.DataObject;
 import org.openide.windows.WindowManager;
 
 /**
- * A Singleton HashSet that holds Strings
- * Will contain the names of all the files currently being synced
- * Also maintains the contents of the Bittle directory 
- * As well as GUI file tree
+ * A Singleton that represents the user's current share session
+ * Contains two hash sets: one for the users in the share, and one
+ * for the files being shared.
+ * Files being shared has 1 to 1 correspondence with bittle directory
+ * and GUI tree
+ * @author chmar
  */
-public class SyncList extends HashSet<String> {
+public class Share {
     
-    private static final SyncList instance;
+    private static final Share instance;
+        
     private final BittleTreeTopComponent fileTree;
     private final Connection connection;
-    public static String bittlePath;
     
-    // Initialize the instance and get the GUI tree
+    public static HashSet<String> users;
+    public static HashSet<String> files;  
+    private static String bittlePath;
+    private boolean waitingForResponse;
+    
+    // Initialize the instance
     static{
-        instance = new SyncList();
+        instance = new Share();
+        users = new HashSet<>();
+        files = new HashSet<>();
+        bittlePath = null;
 
     }
     
-    private SyncList() {
+    private Share() {
         fileTree = (BittleTreeTopComponent) WindowManager.getDefault().findTopComponent("BittleTree");
         connection = Connection.getInstance();
+        connection.addMessageListener((Message m) -> {
+            if(m instanceof Response){
+                if(waitingForResponse){
+                    waitingForResponse = false;
+                    checkReponse((Response) m);
+                }
+            }
+        });
+        
+        waitingForResponse = false;
     }
     
-    public static SyncList getInstance(){
+    public static Share getInstance(){
         return instance;
+    }
+    
+    void addUser(String username) {
+        if(!users.contains(username))
+            users.add(username);
     }
     
     /**
@@ -56,8 +79,8 @@ public class SyncList extends HashSet<String> {
      */
     public void addFile(String filePath) throws IOException{
         String fileName = getFileName(filePath);
-        if(!this.contains(fileName)){
-            this.add(fileName);
+        if(!files.contains(fileName)){
+            files.add(fileName);
             addFileToFolder(filePath);
             fileTree.addObject(fileName);
             trackFile(fileName);
@@ -80,7 +103,7 @@ public class SyncList extends HashSet<String> {
         FileObject fo = FileUtil.toFileObject(FileUtil.normalizeFile(new File(getBittleFilePath(fileName))));
         if(!fo.isLocked()){
             Files.deleteIfExists(Paths.get(getBittleFilePath(fileName)));
-            this.remove(fileName);
+            files.remove(fileName);
         }
         else{
             NotifyDescriptor nd = new NotifyDescriptor.Message("Can not remove locked file " + fileName, NotifyDescriptor.ERROR_MESSAGE);
@@ -97,8 +120,8 @@ public class SyncList extends HashSet<String> {
         String[] filesInBittleFolder = new File(bittlePath).list();
         Iterable<String> fileList = Arrays.asList(filesInBittleFolder);
         for(String fileName : fileList){
-            if(!this.contains(fileName)){
-                this.add(fileName);
+            if(!files.contains(fileName)){
+                files.add(fileName);
                 fileTree.addObject(fileName);
                 trackFile(fileName);
             }
@@ -106,9 +129,9 @@ public class SyncList extends HashSet<String> {
     }
     
     public void clearList() throws IOException{
-        Object[] files = this.toArray();
-        for(int i = 0; i < files.length; i++){
-            this.removeFile((String)files[i]);
+        Object[] fileArray = files.toArray();
+        for(int i = 0; i < fileArray.length; i++){
+            this.removeFile((String)fileArray[i]);
         }
     }
     
@@ -120,11 +143,15 @@ public class SyncList extends HashSet<String> {
      * @return The path of that file in the Bittle directory, if it exists
      */
     public String getBittleFilePath(String fileName){
-        if(this.contains(fileName)){
+        if(files.contains(fileName)){
             return bittlePath + "\\" + fileName;
         }
         else
             return null;
+    }
+    
+    public void setPath(String rootpath){
+        bittlePath = rootpath;
     }
     
     /**
@@ -199,20 +226,42 @@ public class SyncList extends HashSet<String> {
         String filePath = getBittleFilePath(fileName);
         try {
             String[] lines = fileToStringArray(filePath);
+            NotifyDescriptor nd = new NotifyDescriptor.Message("Attempting to track: " + fileName, NotifyDescriptor.INFORMATION_MESSAGE);
+            DialogDisplayer.getDefault().notify(nd);
+            
+            waitingForResponse = true;
             connection.track(filePath, lines);
-            
-            // Wait for response from the server
-            while(Connection.response == null)
-                try {
-                    TimeUnit.MILLISECONDS.sleep(50);
-                } catch (InterruptedException ex) {
-                }
-            
-            if(connection.checkResponse("track")){
-                NotifyDescriptor nd = new NotifyDescriptor.Message("Sharing " + fileName, NotifyDescriptor.INFORMATION_MESSAGE);
-                DialogDisplayer.getDefault().notify(nd);
-            }
+            waitForResponse();
         } catch (IOException ex) {
         }   
     }
+
+    private void checkReponse(Response r) {
+        if(r.getStatus().equals("failed")){
+            NotifyDescriptor nd = new NotifyDescriptor.Message(r.getReason(), NotifyDescriptor.ERROR_MESSAGE);
+            DialogDisplayer.getDefault().notify(nd);
+        }
+        else{
+            NotifyDescriptor nd = new NotifyDescriptor.Message("Success!", NotifyDescriptor.INFORMATION_MESSAGE);
+            DialogDisplayer.getDefault().notify(nd);
+        }
+    }
+    
+    private void waitForResponse() {
+        int timer = 0;
+        while(waitingForResponse){
+            if(timer > 100){
+                NotifyDescriptor nd = new NotifyDescriptor.Message("Waiting for server timed out...", NotifyDescriptor.ERROR_MESSAGE);
+                DialogDisplayer.getDefault().notify(nd);
+                break;
+            }
+            try {
+                TimeUnit.MILLISECONDS.sleep(50);
+            } catch (InterruptedException ex) {
+            }
+            timer ++;
+        }
+    }
+
+
 }

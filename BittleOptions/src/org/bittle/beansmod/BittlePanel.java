@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.bittle.beansmod;
 
 import java.io.IOException;
@@ -11,6 +6,7 @@ import static java.nio.file.StandardCopyOption.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.concurrent.TimeUnit;
 import javax.swing.JFileChooser;
+import org.bittle.messages.*;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.Exceptions;
@@ -23,18 +19,19 @@ final class BittlePanel extends javax.swing.JPanel {
     private final BittleTreeTopComponent fileTree; 
     private final Connection connection;
     private final String serverName = "wss://notextures.io:8086";
-    private final SyncList syncList;
+    private final Share share;
     
     private String username = "";
     private String password = "";
     private String rootpath = System.getProperty("user.home") + "\\Bittle";
     private boolean loggedIn = false;
+    private boolean waitingForResponse = false;
 
     BittlePanel(BittleOptionsPanelController controller, Connection connection) {
         this.controller = controller;
         this.connection = connection;
         this.fileTree = (BittleTreeTopComponent) WindowManager.getDefault().findTopComponent("BittleTree");
-        this.syncList = SyncList.getInstance();
+        this.share = Share.getInstance();
         
         store();
         initComponents();
@@ -42,6 +39,14 @@ final class BittlePanel extends javax.swing.JPanel {
         LogInPanel.setVisible(true);
         LoggedInPanel.setVisible(false);
         focusLoginButton();
+        
+        this.connection.addMessageListener((Message m) -> {
+            if(m instanceof Response){
+                if(waitingForResponse){
+                    checkResponse((Response) m);
+                }
+            }
+        });
     }
 
     /**
@@ -404,53 +409,41 @@ final class BittlePanel extends javax.swing.JPanel {
         // Do clilent side log in validation
         // If log in was invalid, do nothing
         if(!validLogin())
-            return;
+            return;      
         
+        // Connect to the server 
         connection.connect(serverName);
+        
         // Update the username and password with the input
         username = UsernameField.getText();
         password = PasswordField.getText();
         
+        waitingForResponse = true;
         // If the user wants to register, do that
-        if(RegisterCheckbox.isSelected()){
+        if(RegisterCheckbox.isSelected())
             connection.register(username, password);
-            
-            // Wait for response from the server
-            while(Connection.response == null)
-                try {
-                    TimeUnit.MILLISECONDS.sleep(50);
-                } catch (InterruptedException ex) {
-                }
-            
-            if(connection.checkResponse("register")){
-                NotifyDescriptor nd = new NotifyDescriptor.Message("Thanks for signing up, " + username, NotifyDescriptor.INFORMATION_MESSAGE);
-                DialogDisplayer.getDefault().notify(nd);
-                connection.login(username, password);
-            }
-            else
-                return;
-        }
-        // Otherwise do the log in stuff
-        else{
+        // Otherwise try to log in
+        else
             connection.login(username, password);
-            
-            // Wait for response from the server
-            while(Connection.response == null)
-                try {
-                    TimeUnit.MILLISECONDS.sleep(50);
-                } catch (InterruptedException ex) {
-            }
-            
-            if(connection.checkResponse("login")){
-                NotifyDescriptor nd = new NotifyDescriptor.Message("Welcome Back, " + username, NotifyDescriptor.INFORMATION_MESSAGE);
-                DialogDisplayer.getDefault().notify(nd);
-            }
-            else
-                return;
+        
+        if(!waitForResponse()){
+            NotifyDescriptor nd = new NotifyDescriptor.Message("Waiting for server timed out...", NotifyDescriptor.ERROR_MESSAGE);
+            DialogDisplayer.getDefault().notify(nd);
+            return;
         }
         
-        // Set the log in flag to true
-        loggedIn = true;
+        // Wait for the message handler to set log in status
+        // Ugly but won't work without it :(
+        try {
+            TimeUnit.MILLISECONDS.sleep(150);
+        } catch (InterruptedException ex) {
+        }
+        
+        // If the log in or register failed, back out 
+        if(!loggedIn){
+            System.out.println("fail");
+            return;
+        }
         
         // Try to create the bittle directory
         // If it already exists, rootpath will be updated
@@ -464,7 +457,7 @@ final class BittlePanel extends javax.swing.JPanel {
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }
-        
+        share.addUser(username);
         store();    // Store the new information
         
         // Show the appropriate screens and text 
@@ -490,18 +483,11 @@ final class BittlePanel extends javax.swing.JPanel {
         String pass = currPassField.getText();
         String newPass = newPassField.getText();
         
+        waitingForResponse = true;
         connection.changePass(username, pass, newPass);
         
-        // Wait for response from the server
-        while(Connection.response == null){
-            try {
-                TimeUnit.MILLISECONDS.sleep(50);
-            } catch (InterruptedException ex) {
-            }
-        }
-            
-        if(connection.checkResponse("changePass")){
-            NotifyDescriptor nd = new NotifyDescriptor.Message("Password successfully changed!", NotifyDescriptor.INFORMATION_MESSAGE);
+        if(!waitForResponse()){
+            NotifyDescriptor nd = new NotifyDescriptor.Message("Waiting for server timed out...", NotifyDescriptor.ERROR_MESSAGE);
             DialogDisplayer.getDefault().notify(nd);
         }
     }//GEN-LAST:event_ChangePassButtonActionPerformed
@@ -525,9 +511,8 @@ final class BittlePanel extends javax.swing.JPanel {
     void store() {
         NbPreferences.forModule(BittlePanel.class).put("username", username);
         NbPreferences.forModule(BittlePanel.class).put("password", password);
-        NbPreferences.forModule(BittlePanel.class).put("rootpath", rootpath);
         NbPreferences.forModule(BittlePanel.class).putBoolean("status", loggedIn);
-        SyncList.bittlePath = rootpath;
+        share.setPath(rootpath);
     }
 
     boolean valid() {
@@ -642,5 +627,55 @@ final class BittlePanel extends javax.swing.JPanel {
         this.requestFocusInWindow();
         LogInPanel.requestFocusInWindow();
         LoginButton.requestFocusInWindow();
+    }
+
+    private void checkResponse(Response r) {
+        waitingForResponse = false;
+        if(r.getStatus().equals("failed")){
+            loggedIn = false;
+            NotifyDescriptor nd = new NotifyDescriptor.Message(r.getReason(), NotifyDescriptor.ERROR_MESSAGE);
+            DialogDisplayer.getDefault().notify(nd);
+            return;
+        }
+        switch (r.getID()) {
+            case "register":
+                {
+                    loggedIn = true;
+                    NotifyDescriptor nd = new NotifyDescriptor.Message("Thanks for signing up, " + username, NotifyDescriptor.INFORMATION_MESSAGE);
+                    DialogDisplayer.getDefault().notify(nd);
+                    connection.login(username, password);
+                    break;
+                }
+            case "login":
+                {
+                    loggedIn = true;
+                    NotifyDescriptor nd = new NotifyDescriptor.Message("Welcome Back, " + username, NotifyDescriptor.INFORMATION_MESSAGE);
+                    DialogDisplayer.getDefault().notify(nd);
+                    break;
+                }
+            case "changePass":
+                {
+                    NotifyDescriptor nd = new NotifyDescriptor.Message("Password successfully changed!", NotifyDescriptor.INFORMATION_MESSAGE);
+                    DialogDisplayer.getDefault().notify(nd);
+                    break;
+                }
+            default:
+                break;
+        }
+    }
+
+    private boolean waitForResponse() {
+        int timer = 0;
+        while(waitingForResponse){
+            if(timer > 1000){
+                return false;
+            }
+            try {
+                TimeUnit.MILLISECONDS.sleep(50);
+            } catch (InterruptedException ex) {
+            }
+            timer++;
+        }
+        return true;
     }
 }

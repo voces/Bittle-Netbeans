@@ -2,7 +2,11 @@ package org.bittle.beansmod;
 
 import com.eclipsesource.json.*;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.Future;
+import org.bittle.messages.*;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -13,15 +17,15 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketError;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
-import org.openide.DialogDisplayer;
-import org.openide.NotifyDescriptor;
 
 @WebSocket
 public class Connection {
-    
+ 
     //singleton
     private static final Connection instance;
-    public static JsonObject response = null;
+    //public static JsonObject response = null;
+    
+    private static final List<MessageListener> listeners = new ArrayList<>();
     
     static {
         instance = new Connection();
@@ -59,9 +63,8 @@ public class Connection {
     {
         LOG.info("onMessage() - {}", msg);
         
-        System.out.println("============onMessage called!==========");
-        System.out.println(msg);
-        System.out.println("=======================================");
+        //NotifyDescriptor nd = new NotifyDescriptor.Message(msg, NotifyDescriptor.INFORMATION_MESSAGE);
+        //DialogDisplayer.getDefault().notify(nd);
         
         // Parse the message as a JSON object
         JsonObject jsonMessage = Json.parse(msg).asObject();
@@ -69,26 +72,43 @@ public class Connection {
         // Get the 'id' field of the JSON object 
         String id = jsonMessage.getString("id", null);
         
+        // The response that will be fired off to the listeners
+        Message response;
+        
         //System.out.println("============id is " + id + "=============");
         
         //big switch statement goes here based on the response's id
         // Do we really need a switch statement here?
         // We can just send the JSON response to whoever is expecting it 
-        switch(id.toLowerCase()){
+        switch(id){
             case "register":
             case "login":
             case "logout":
             case "track":
+            case "changePass":
+                response = new Response(jsonMessage, id);
+                break;
             case "invite":
-            case "changepass":
-            case "addfile":
+                // Invite messages will either be a response or an invitation
+                // If there is a status in the JSON, it is a response
+                if(jsonMessage.getString("status", null) != null)
+                    response = new Response(jsonMessage, id);
+                // Otherwise send the invitation
+                else
+                    response = new Invitation(jsonMessage, id);
+                break;
+            case "addFile":
+                // May need to request new file here
+                response = new Update(jsonMessage, id);
+            case "addClient":
+                response = new shareSession(jsonMessage, id);
             case "lines":
             case "line":
-                response = jsonMessage;
             default:
-                // absorb other responses for now
+                response = null;
                 break;
         }
+        fireMessage(response);
         
         //on the message responding to an editor change, check awaitingServerResponseForEdit flag; true = don't update, false = update
         //not the best solution because this client won't get any editor updates until getting a response from the server?
@@ -129,21 +149,10 @@ public class Connection {
      * @return true if the response matched the given id and didn't fail, 
      * false otherwise 
      */
-    public boolean checkResponse(String id){        
-        if(response.getString("id", null).equals(id)){
-            if(response.getString("status", null).equals("failed")){
-                NotifyDescriptor nd = new NotifyDescriptor.Message(response.getString("reason",  id + " failed"), NotifyDescriptor.ERROR_MESSAGE);
-                DialogDisplayer.getDefault().notify(nd);
-            }
-            else
-                return true;
-        }
-        
-        return false;
-    }
+    //public boolean checkResponse(String id){        
+    //}
     
     private void sendMessage(String message) {
-        response = null;
         try {
             session.getRemote().sendString(message);
         }
@@ -259,4 +268,30 @@ public class Connection {
         JsonObject invitation = Json.object().add("id", "invite").add("name", username);
         sendMessage(invitation.toString());
     }
+    
+    public void accept(String username, int shareID){
+        JsonObject accept = Json.object().add("id", "accept").add("blame", username).add("shareId", shareID);
+        sendMessage(accept.toString());
+    }
+    
+    public void decline(String username, int shareID){
+        JsonObject decline = Json.object().add("id", "decline").add("blame", username).add("shareId", shareID);
+        sendMessage(decline.toString());
+    }
+
+    public void addMessageListener(MessageListener l) {
+        listeners.add(l);
+    }
+    
+    public void removeMessageListner(MessageListener l){
+        listeners.remove(l);
+    }
+
+    private void fireMessage(Message m) {
+        Iterator listenerIterator = listeners.iterator();
+        while(listenerIterator.hasNext()){
+            ((MessageListener)listenerIterator.next()).messageRecieved(m);
+        }
+    }
+
 }

@@ -59,7 +59,7 @@ public final class BittleTreeTopComponent extends TopComponent {
     private Preferences loginState = NbPreferences.forModule(BittlePanel.class);
     private boolean loggedIn;
     private final TreePopup treePopup;
-    private SyncList syncList = SyncList.getInstance();
+    private Share share = Share.getInstance();
 
     public BittleTreeTopComponent() {
         initComponents();
@@ -222,7 +222,7 @@ public final class BittleTreeTopComponent extends TopComponent {
         if(choice == JFileChooser.APPROVE_OPTION){
             String filePath = fileChooser.getSelectedFile().toString();
             try {
-                syncList.addFile(filePath);
+                share.addFile(filePath);
             } catch (IOException ex) {
             }
         }
@@ -249,7 +249,7 @@ public final class BittleTreeTopComponent extends TopComponent {
                 // Otherwise
                 else if (evt.getClickCount() == 2){
                     // Get the file object from the selected node
-                    FileObject fo = FileUtil.toFileObject(FileUtil.normalizeFile(new File(syncList.getBittleFilePath((String)selectedNode.getUserObject()))));
+                    FileObject fo = FileUtil.toFileObject(FileUtil.normalizeFile(new File(share.getBittleFilePath((String)selectedNode.getUserObject()))));
                     try {
                         // Open it
                         DataObject.find(fo).getLookup().lookup(OpenCookie.class).open();
@@ -270,7 +270,7 @@ public final class BittleTreeTopComponent extends TopComponent {
                                                                NotifyDescriptor.OK_CANCEL_OPTION);
         
         if (DialogDisplayer.getDefault().notify(d) == NotifyDescriptor.OK_OPTION) {
-            if(syncList.isEmpty()){
+            if(share.files.isEmpty()){
                 NotifyDescriptor nd = new NotifyDescriptor.Message("Nothing to Remove...", NotifyDescriptor.WARNING_MESSAGE);
                 DialogDisplayer.getDefault().notify(nd);
             }
@@ -328,9 +328,9 @@ public final class BittleTreeTopComponent extends TopComponent {
     public void updateTree(){
         loggedIn = loginState.getBoolean("status", false);
         if(loggedIn){
-            if(syncList == null)
-                syncList = SyncList.getInstance();
-            syncList.scanFolder();
+            if(share == null)
+                share = Share.getInstance();
+            share.scanFolder();
             treeModel.reload();
             LoggedInScreen.setVisible(true);
             NotLoggedInScreen.setVisible(false);
@@ -345,7 +345,7 @@ public final class BittleTreeTopComponent extends TopComponent {
     
    private void clearFiles() throws IOException{
        rootNode.removeAllChildren();
-       syncList.clearList();
+       share.clearList();
        treeModel.reload();
    }
    
