@@ -3,6 +3,7 @@ package org.bittle.beansmod;
 import com.eclipsesource.json.*;
 import java.net.URI;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -13,6 +14,9 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketError;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
+import org.openide.util.Exceptions;
 
 @WebSocket
 public class Connection {
@@ -117,6 +121,27 @@ public class Connection {
     
     public void close() {
         session.close();
+    }
+    
+    /**
+     * Parses a response from the server 
+     * If the id matches the given id, check the status
+     * If the status is failed, displays the reason for failure
+     * @param id the kind of response being checked
+     * @return true if the response matched the given id and didn't fail, 
+     * false otherwise 
+     */
+    public boolean checkResponse(String id){        
+        if(response.getString("id", null).equals(id)){
+            if(response.getString("status", null).equals("failed")){
+                NotifyDescriptor nd = new NotifyDescriptor.Message(response.getString("reason",  id + " failed"), NotifyDescriptor.ERROR_MESSAGE);
+                DialogDisplayer.getDefault().notify(nd);
+            }
+            else
+                return true;
+        }
+        
+        return false;
     }
     
     private void sendMessage(String message) {

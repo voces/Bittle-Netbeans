@@ -1,12 +1,8 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.bittle.beansmod;
 
 import java.awt.event.ActionEvent;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
@@ -14,6 +10,7 @@ import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
+import static org.bittle.beansmod.Connection.response;
 import org.openide.*;
 
 /**
@@ -34,31 +31,10 @@ public class TreePopup extends JPopupMenu{
         connection = Connection.getInstance();
         
         // Set up the pop up options
-        JMenuItem share = new JMenuItem("Share...");
-        JMenuItem shareWith = new JMenuItem("Share With...");
-        JMenuItem stopSharing = new JMenuItem("Stop Sharing With...");
+        JMenuItem invite = new JMenuItem("Invite");
         JMenuItem remove = new JMenuItem("Remove");
         
-        /**
-         * share Action
-         * Gets the selected node in the tree
-         * Sends that file to be tracked by the server
-         */
-        share.addActionListener((ActionEvent e) -> {
-            TreePath selection = tree.getSelectionPath();
-            DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode)selection.getLastPathComponent();
-            syncList.trackFile((String) selectedNode.getUserObject());
-        });
-        
-        
-        /**
-         * shareWith Action
-         * Gets the selected node in the tree
-         * Asks the user who they want to share the file with
-         * Sends the file to the server for tracking
-         * Sends that user an invite 
-         */
-        shareWith.addActionListener((ActionEvent e) -> {
+        invite.addActionListener((ActionEvent e) ->{
             NotifyDescriptor.InputLine shareMessage = new NotifyDescriptor.InputLine("Username: ",
                                                                                      "Who do you want to invite to the session?", 
                                                                                      NotifyDescriptor.QUESTION_MESSAGE, 
@@ -68,43 +44,23 @@ public class TreePopup extends JPopupMenu{
             Object result = DialogDisplayer.getDefault().notify(shareMessage);
             if(result == NotifyDescriptor.OK_OPTION){
                 String userName = shareMessage.getInputText();
-                TreePath selection = tree.getSelectionPath();
-                DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode)selection.getLastPathComponent();
-                syncList.trackFile((String) selectedNode.getUserObject());
                 connection.invite(userName);
-                NotifyDescriptor nd = new NotifyDescriptor.Message("Invited" 
+                
+                // Wait for response from the server
+                while(response == null)
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(50);
+                    } catch (InterruptedException ex) {
+                    }
+                
+                if(connection.checkResponse("invite")){
+                    NotifyDescriptor nd = new NotifyDescriptor.Message("Sent " 
                                                                    + userName
-                                                                   + " to share "
-                                                                   + selectedNode.getUserObject(), 
+                                                                   + " an invitation to join your session.", 
                                                                    NotifyDescriptor.INFORMATION_MESSAGE
                                                                   );
-                DialogDisplayer.getDefault().notify(nd);
-            }
-        });
-        
-        /**
-         * stopSharing Action
-         * Does the same as shareWith with different text
-         */
-        stopSharing.addActionListener((ActionEvent e) -> {
-            NotifyDescriptor.InputLine shareMessage = new NotifyDescriptor.InputLine("Username: ",
-                                                                                     "Who do you want to stop sharing this file with?", 
-                                                                                     NotifyDescriptor.QUESTION_MESSAGE, 
-                                                                                     NotifyDescriptor.QUESTION_MESSAGE
-                                                                                    );
-            shareMessage.setInputText("Enter collaborator's username");
-            Object result = DialogDisplayer.getDefault().notify(shareMessage);
-            if(result == NotifyDescriptor.OK_OPTION){
-                TreePath selection = tree.getSelectionPath();
-                DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode)selection.getLastPathComponent();
-                String userName = shareMessage.getInputText();
-                NotifyDescriptor nd = new NotifyDescriptor.Message("TODO: Stop sharing " 
-                                                                   + selectedNode.getUserObject()
-                                                                   + " with "
-                                                                   + userName, 
-                                                                   NotifyDescriptor.WARNING_MESSAGE
-                                                                  );
-                DialogDisplayer.getDefault().notify(nd);
+                    DialogDisplayer.getDefault().notify(nd);
+                }
             }
         });
         
@@ -125,9 +81,7 @@ public class TreePopup extends JPopupMenu{
         });
         
         // Add options to the pop up menu
-        add(share);
-        add(shareWith);
-        add(stopSharing);
+        add(invite);
         add(new JSeparator());
         add(remove);
     }

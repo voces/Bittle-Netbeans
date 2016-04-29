@@ -11,7 +11,7 @@ import static java.nio.file.StandardCopyOption.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.concurrent.TimeUnit;
 import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
+import static org.bittle.beansmod.Connection.response;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.Exceptions;
@@ -321,46 +321,41 @@ final class BittlePanel extends javax.swing.JPanel {
         password = PasswordField.getText();
         
         // If the user wants to register, do that
-        if(RegisterCheckbox.isSelected())
+        if(RegisterCheckbox.isSelected()){
             connection.register(username, password);
-        // Otherwise do the log in stuff
-        else
-            connection.login(username, password);
             
-        // Wait for the server response
-        // Is this the best way of doing it?
-        while(Connection.response == null)
-            try {
-                TimeUnit.MILLISECONDS.sleep(50);
-            } catch (InterruptedException ex) {
-                Exceptions.printStackTrace(ex);
-            }
-        
-        String id = Connection.response.getString("id", null);
-        if(id.equals("login")){
-            String status = Connection.response.getString("status", null);
-            if(status.equals("failed")){
-                NotifyDescriptor nd = new NotifyDescriptor.Message(Connection.response.getString("reason", "Login Failed"), NotifyDescriptor.ERROR_MESSAGE);
-                DialogDisplayer.getDefault().notify(nd);
-                return;
-            }
-            else{
-                NotifyDescriptor nd = new NotifyDescriptor.Message("Welcome Back, " + username, NotifyDescriptor.INFORMATION_MESSAGE);
-                DialogDisplayer.getDefault().notify(nd);
-            }
-        }
-        else if(id.equals("register")){
-            String status = Connection.response.getString("status", null);
-            if(status.equals("failed")){
-                NotifyDescriptor nd = new NotifyDescriptor.Message(Connection.response.getString("reason", "Register Failed"), NotifyDescriptor.ERROR_MESSAGE);
-                DialogDisplayer.getDefault().notify(nd);
-                return; 
-            }
-            else{
+            // Wait for response from the server
+            while(Connection.response == null)
+                try {
+                    TimeUnit.MILLISECONDS.sleep(50);
+                } catch (InterruptedException ex) {
+                }
+            
+            if(connection.checkResponse("register")){
                 NotifyDescriptor nd = new NotifyDescriptor.Message("Thanks for signing up, " + username, NotifyDescriptor.INFORMATION_MESSAGE);
                 DialogDisplayer.getDefault().notify(nd);
                 connection.login(username, password);
             }
+            else
+                return;
+        }
+        // Otherwise do the log in stuff
+        else{
+            connection.login(username, password);
+            
+            // Wait for response from the server
+            while(Connection.response == null)
+                try {
+                    TimeUnit.MILLISECONDS.sleep(50);
+                } catch (InterruptedException ex) {
+            }
+            
+            if(connection.checkResponse("login")){
+                NotifyDescriptor nd = new NotifyDescriptor.Message("Welcome Back, " + username, NotifyDescriptor.INFORMATION_MESSAGE);
+                DialogDisplayer.getDefault().notify(nd);
+            }
+            else
+                return;
         }
         
         // Set the log in flag to true
@@ -453,7 +448,8 @@ final class BittlePanel extends javax.swing.JPanel {
      */
     private boolean validLogin() {
         if("".equals(PasswordField.getText()) || "".equals(UsernameField.getText())){
-            JOptionPane.showMessageDialog(LogInPanel, "Username or Password cannot be blank!", "Error!", JOptionPane.ERROR_MESSAGE);
+            NotifyDescriptor nd = new NotifyDescriptor.Message("Fields cannot be blank!", NotifyDescriptor.ERROR_MESSAGE);
+            DialogDisplayer.getDefault().notify(nd);
             return false;
         }
         return true;

@@ -10,9 +10,9 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import static org.bittle.beansmod.Connection.response;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
-import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
 
 /**
@@ -25,16 +25,17 @@ public class SyncList extends HashSet<String> {
     
     private static final SyncList instance;
     private static final BittleTreeTopComponent fileTree;
+    private static final Connection connection;
     public static String bittlePath;
     
-    private final Connection connection;
     // Initialize the instance and get the GUI tree
     static{
         instance = new SyncList();
         fileTree = (BittleTreeTopComponent) WindowManager.getDefault().findTopComponent("BittleTree");
+        connection = Connection.getInstance();
     }
     
-    private SyncList() {connection = Connection.getInstance();}
+    private SyncList() {}
     
     public static SyncList getInstance(){
         return instance;
@@ -43,7 +44,7 @@ public class SyncList extends HashSet<String> {
     /**
      * Expects a path of form "/folderA/folderB/file.txt"
      * Checks if "file.txt" is being synced
-     * If it is not, adds the file to the sync list and the bittle folder
+     * If it is not, adds the file to the list and begins syncing 
      * @param filePath path of the new file to be added
      * @return true if the file was added, false otherwise
      */
@@ -53,6 +54,7 @@ public class SyncList extends HashSet<String> {
             instance.add(fileName);
             addFileToFolder(filePath);
             fileTree.addObject(fileName);
+            trackFile(fileName);
         }
     }
     
@@ -69,37 +71,24 @@ public class SyncList extends HashSet<String> {
         instance.remove(fileName);
     }
     
-    public boolean trackFile(String fileName){
-        boolean tracked = false;
+    private static void trackFile(String fileName){
         
         String filePath = getBittleFilePath(fileName);
         try {
             String[] lines = fileToStringArray(filePath);
             connection.track(filePath, lines);
-            
             // Wait for response from the server
-            while(Connection.response == null)
+            while(response == null)
                 try {
                     TimeUnit.MILLISECONDS.sleep(50);
                 } catch (InterruptedException ex) {
-                    Exceptions.printStackTrace(ex);
                 }
-            
-            if(Connection.response.getString("id", null).equals("track")){
-                if(Connection.response.getString("status", null).equals("failed")){
-                    NotifyDescriptor nd = new NotifyDescriptor.Message(Connection.response.getString("reason", "Tracking Failed"), NotifyDescriptor.ERROR_MESSAGE);
-                    DialogDisplayer.getDefault().notify(nd);
-                }
-                else{
-                    tracked = true;
-                    NotifyDescriptor nd = new NotifyDescriptor.Message("Sharing " + fileName, NotifyDescriptor.INFORMATION_MESSAGE);
-                    DialogDisplayer.getDefault().notify(nd);
-                }
+            if(connection.checkResponse("track")){
+                NotifyDescriptor nd = new NotifyDescriptor.Message("Sharing " + fileName, NotifyDescriptor.INFORMATION_MESSAGE);
+                DialogDisplayer.getDefault().notify(nd);
             }
         } catch (IOException ex) {
-        }
-        
-        return tracked;
+        }   
     }
     
     /**
@@ -114,6 +103,7 @@ public class SyncList extends HashSet<String> {
             if(!instance.contains(fileName)){
                 instance.add(fileName);
                 fileTree.addObject(fileName);
+                trackFile(fileName);
             }
         }
     }
