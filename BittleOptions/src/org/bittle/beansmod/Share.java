@@ -38,7 +38,6 @@ public class Share {
     
     private boolean waitingForResponse;
     private String bittlePath;
-    private String me;
     private String owner;
     
     public HashSet<String> users;
@@ -72,14 +71,16 @@ public class Share {
                 }
             }
         });
-        
+       
+       
         // Gets the preferences stored in the options
         // If the rootpath preference changes, update the bittlePath
         preferences = NbPreferences.forModule(BittlePanel.class);
+        /*
         preferences.addPreferenceChangeListener((PreferenceChangeEvent evt) -> {
             if(evt.getKey().equals("path"))
                 bittlePath = evt.getNewValue();
-        });
+        });*/
     }
     
     /**
@@ -190,7 +191,7 @@ public class Share {
      * @return Username of the current user 
      */
     public String getMe(){
-        return me;
+        return preferences.get("username", null);
     }
     
     /**
@@ -312,5 +313,9 @@ public class Share {
             
             timer ++;
         }
+    }
+
+    void setPath(String rootpath) {
+        bittlePath = rootpath;
     }
 }
