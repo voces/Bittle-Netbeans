@@ -7,6 +7,7 @@ package org.bittle.beansmod;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.Preferences;
 import javax.swing.JFileChooser;
 import javax.swing.JTree;
@@ -16,7 +17,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import org.netbeans.api.options.OptionsDisplayer;
-import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.awt.ActionID;
@@ -32,13 +32,6 @@ import org.openide.util.NbPreferences;
 import org.openide.windows.Mode;
 import org.openide.windows.WindowManager;
 
-/**
- * Top component which displays something.
- */
-@ConvertAsProperties(
-        dtd = "-//org.bittle.beansmod//BittleTree//EN",
-        autostore = false
-)
 @TopComponent.Description(
         preferredID = "BittleTree",
         iconBase = "org/bittle/beansmod/BittleLogo16.png",
@@ -47,7 +40,7 @@ import org.openide.windows.WindowManager;
 @TopComponent.Registration(mode = "explorer", openAtStartup = false)
 @ActionID(category = "Window", id = "org.bittle.beansmod.BittleTreeTopComponent")
 @ActionReferences({
-    @ActionReference(path = "Menu/Window" /*, position = 333 */),
+    @ActionReference(path = "Menu/Window"),
     @ActionReference(path = "Shortcuts", name = "D-B")
 })
 @TopComponent.OpenActionRegistration(
@@ -56,26 +49,43 @@ import org.openide.windows.WindowManager;
 )
 public final class BittleTreeTopComponent extends TopComponent {
     
-    private Preferences loginState = NbPreferences.forModule(BittlePanel.class);
-    private boolean loggedIn;
+    private final Preferences preferences;
     private final TreePopup treePopup;
-    private Share share = Share.getInstance();
+    private boolean loggedIn;
 
     public BittleTreeTopComponent() {
-        initComponents();
-        treePopup = new TreePopup(fileTree, treeModel);
+        // Set up the GUI window 
         setName("Bittle Files");
-        setToolTipText("These are the files being synced by Bittle");   
+        setToolTipText("These are the files being synced by Bittle");
+        initComponents();
+        
+        // Add the pop up menu to the tree
+        treePopup = new TreePopup(fileTree, treeModel);
+        
+        // Get the preferences of the options
+        // Listen for changes to "status" preference
+        // Update log in state on any changes 
+        preferences = NbPreferences.forModule(BittlePanel.class);
+        preferences.addPreferenceChangeListener((PreferenceChangeEvent evt) -> {
+            if(evt.getKey().equals("status")){
+                loggedIn = evt.getNode().getBoolean("status", loggedIn);
+                updateTree();
+            }
+        });
     }
     
+    /**
+     * Override the open method to force opening in explorer view 
+     */
+    @Override
     public void open() {
         Mode m = WindowManager.getDefault().findMode ("explorer");
         if (m != null) {
             m.dockInto(this);
         }
         super.open();
-        updateTree();
     }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -214,15 +224,21 @@ public final class BittleTreeTopComponent extends TopComponent {
     }// </editor-fold>//GEN-END:initComponents
 
     private void addButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addButtonActionPerformed
+        
+        // Set up a file chooser for files 
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
+        // Show the file chooser 
         int choice = fileChooser.showOpenDialog(null);
 
+        // If the user chose something 
         if(choice == JFileChooser.APPROVE_OPTION){
+            
+            // Get the path of thier choice and attempt to add it to the share 
             String filePath = fileChooser.getSelectedFile().toString();
             try {
-                share.addFile(filePath);
+                Share.getInstance().addFile(filePath);
             } catch (IOException ex) {
             }
         }
@@ -246,12 +262,10 @@ public final class BittleTreeTopComponent extends TopComponent {
                 if (SwingUtilities.isRightMouseButton(evt))
                     treePopup.show(evt.getComponent(), evt.getX(), evt.getY());
                 
-                // Otherwise
+                // If the user double clicked, Get the file object from the selected node and open it
                 else if (evt.getClickCount() == 2){
-                    // Get the file object from the selected node
-                    FileObject fo = FileUtil.toFileObject(FileUtil.normalizeFile(new File(share.getBittleFilePath((String)selectedNode.getUserObject()))));
+                    FileObject fo = FileUtil.toFileObject(FileUtil.normalizeFile(new File(Share.getInstance().getBittleFilePath((String)selectedNode.getUserObject()))));
                     try {
-                        // Open it
                         DataObject.find(fo).getLookup().lookup(OpenCookie.class).open();
                     } catch (DataObjectNotFoundException ex) {
                     }
@@ -265,15 +279,20 @@ public final class BittleTreeTopComponent extends TopComponent {
     }//GEN-LAST:event_ToOptionsButtonActionPerformed
 
     private void RemoveAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RemoveAllButtonActionPerformed
+        
+        // Confirm the user wants to wipe out all the files 
         NotifyDescriptor d = new NotifyDescriptor.Confirmation("This will completely remove all the files being synced from your computer!", 
                                                                "Are you sure?",
                                                                NotifyDescriptor.OK_CANCEL_OPTION);
         
+        // If the user confirmed
         if (DialogDisplayer.getDefault().notify(d) == NotifyDescriptor.OK_OPTION) {
-            if(share.files.isEmpty()){
+            // Make sure there are files in the share
+            if(Share.getInstance().files.isEmpty()){
                 NotifyDescriptor nd = new NotifyDescriptor.Message("Nothing to Remove...", NotifyDescriptor.WARNING_MESSAGE);
                 DialogDisplayer.getDefault().notify(nd);
             }
+            // If there are, clear everything out 
             else
                 try {
                     clearFiles();
@@ -304,21 +323,9 @@ public final class BittleTreeTopComponent extends TopComponent {
     
     @Override
     public void componentClosed() {
-        // TODO add custom code on component closing
+        // N/A
     }
 
-    void writeProperties(java.util.Properties p) {
-        // better to version settings since initial version as advocated at
-        // http://wiki.apidesign.org/wiki/PropertyFiles
-        p.setProperty("version", "1.0");
-        // TODO store your settings
-    }
-
-    void readProperties(java.util.Properties p) {
-        String version = p.getProperty("version");
-        // TODO read your settings according to their version
-    }
-    
     /**
      * Updates Log In State and Bittle Directory Path
      * - If the user is logged in:
@@ -326,11 +333,8 @@ public final class BittleTreeTopComponent extends TopComponent {
      * - Otherwise, displays the not logged in screen
      */
     public void updateTree(){
-        loggedIn = loginState.getBoolean("status", false);
         if(loggedIn){
-            if(share == null)
-                share = Share.getInstance();
-            share.scanFolder();
+            Share.getInstance().scanFolder();
             treeModel.reload();
             LoggedInScreen.setVisible(true);
             NotLoggedInScreen.setVisible(false);
@@ -342,25 +346,40 @@ public final class BittleTreeTopComponent extends TopComponent {
             ToOptionsButton.requestFocusInWindow();
         }
     }
+ 
+    /**
+     * Removes all children from tree root
+     * Clears all files from share session 
+     * Reloads the tree
+     */
+    private void clearFiles() throws IOException{
+        rootNode.removeAllChildren();
+        Share.getInstance().clearList();
+        treeModel.reload();
+    }
     
-   private void clearFiles() throws IOException{
-       rootNode.removeAllChildren();
-       share.clearList();
-       treeModel.reload();
-   }
-   
-   public DefaultMutableTreeNode addObject(Object child){
-       return addObject(rootNode, child, true);
-   }
-   
-   private DefaultMutableTreeNode addObject(DefaultMutableTreeNode parent, Object child, boolean visible){
-       DefaultMutableTreeNode childNode = new DefaultMutableTreeNode(child);
-       
-       treeModel.insertNodeInto(childNode, parent, parent.getChildCount());
-       
-       if(visible)
-           fileTree.scrollPathToVisible(new TreePath(childNode.getPath()));
-       
-       return childNode;
-   }
+    /**
+     * Adds an object to the root node of the tree
+     * @param child The object to be added to the tree
+     * @return The node that was added
+    */
+    public DefaultMutableTreeNode addObject(Object child){
+        return addObject(rootNode, child);
+    }
+    
+    /**
+     * Adds a new child to a node in the tree
+     * @param parent The node the new node should be added to 
+     * @param child The object to be added to the tree
+     * @return  The node that was added
+    */
+    private DefaultMutableTreeNode addObject(DefaultMutableTreeNode parent, Object child){
+        DefaultMutableTreeNode childNode = new DefaultMutableTreeNode(child);
+        
+        treeModel.insertNodeInto(childNode, parent, parent.getChildCount());
+        
+        fileTree.scrollPathToVisible(new TreePath(childNode.getPath()));
+        
+        return childNode;
+    }
 }

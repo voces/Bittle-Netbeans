@@ -8,22 +8,23 @@ package org.bittle.messages;
 import com.eclipsesource.json.*;
 
 /**
- *
+ * Update message 
  * @author chmar
  */
 public class Update implements Message{
     
-    private JsonObject update;
-    private String id;
-    private String blame;
-    private String change;
+    private JsonObject update;    // JSON message from server
+    private String id;            // Message id
+    private String blame;         // User that caused the update
     
+    // Intialize the fields
     public Update(JsonObject update, String id){
         this.update = update;
         this.id = id;
         this.blame = update.getString("blame", null);
     }
 
+    // Getters for all the fields 
     @Override
     public String getID() {
         return id;
@@ -33,8 +34,13 @@ public class Update implements Message{
         return blame;
     }
     
-    public String getChange(String changeType){
-        return update.getString(changeType, null);
+    /**
+     * Lazily return what the client was notified that changed in the update 
+     * @param changeType the name of the field that was changed
+     * @return The object the client expects was changed 
+     */
+    public JsonValue getChange(String changeType){
+        return update.get(changeType);
     }
     
 }

@@ -18,8 +18,9 @@ final class BittlePanel extends javax.swing.JPanel {
     private final BittleOptionsPanelController controller;
     private final BittleTreeTopComponent fileTree; 
     private final Connection connection;
-    private final String serverName = "wss://notextures.io:8086";
     private final Share share;
+    private final String serverName = "wss://notextures.io:8086";
+
     
     private String username = "";
     private String password = "";
@@ -27,23 +28,31 @@ final class BittlePanel extends javax.swing.JPanel {
     private boolean loggedIn = false;
     private boolean waitingForResponse = false;
 
-    BittlePanel(BittleOptionsPanelController controller, Connection connection) {
+    BittlePanel(BittleOptionsPanelController controller) {
         this.controller = controller;
-        this.connection = connection;
         this.fileTree = (BittleTreeTopComponent) WindowManager.getDefault().findTopComponent("BittleTree");
+        this.connection = Connection.getInstance();
         this.share = Share.getInstance();
         
+        // Store default preferences
         store();
+        
+        // Load the GUI
         initComponents();
         
+        // Set the initial log in screen 
         LogInPanel.setVisible(true);
         LoggedInPanel.setVisible(false);
-        focusLoginButton();
-        
+        //focusLoginButton();
+       
+        // Options panel message listner
+        // Only interested in Response messages
+        // If the component is waiting for a response from the server
+        // And it recieves a response message, it will handle it 
         this.connection.addMessageListener((Message m) -> {
             if(m instanceof Response){
                 if(waitingForResponse){
-                    checkResponse((Response) m);
+                    handleResponse((Response) m);
                 }
             }
         });
@@ -380,11 +389,10 @@ final class BittlePanel extends javax.swing.JPanel {
         // If the user selected a folder
         if(choice == JFileChooser.APPROVE_OPTION){
             
-            // Try to create a Bittle folder in it
+            // Try to create a Bittle folder in it, updates rootpath if it does
             try {
                 createBittleDirectory(fileChooser.getSelectedFile().toString(), true);
             } catch (IOException ex) {
-                Exceptions.printStackTrace(ex);
             }
             
             store();    // Stores the new rootpath
@@ -393,6 +401,7 @@ final class BittlePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_BrowseButtonActionPerformed
 
     private void RegisterCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RegisterCheckboxActionPerformed
+        
         // If the checkbox is selected, show the register prompts
         if(RegisterCheckbox.isSelected()){
             LoginLabel.setText("Sign Up");
@@ -406,6 +415,7 @@ final class BittlePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_RegisterCheckboxActionPerformed
 
     private void LoginButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LoginButtonActionPerformed
+        
         // Do clilent side log in validation
         // If log in was invalid, do nothing
         if(!validLogin())
@@ -418,7 +428,9 @@ final class BittlePanel extends javax.swing.JPanel {
         username = UsernameField.getText();
         password = PasswordField.getText();
         
+        // Set up the wait flag
         waitingForResponse = true;
+        
         // If the user wants to register, do that
         if(RegisterCheckbox.isSelected())
             connection.register(username, password);
@@ -426,6 +438,8 @@ final class BittlePanel extends javax.swing.JPanel {
         else
             connection.login(username, password);
         
+        // If the server didn't respond
+        // Notify the time out and do nothing 
         if(!waitForResponse()){
             NotifyDescriptor nd = new NotifyDescriptor.Message("Waiting for server timed out...", NotifyDescriptor.ERROR_MESSAGE);
             DialogDisplayer.getDefault().notify(nd);
@@ -439,11 +453,9 @@ final class BittlePanel extends javax.swing.JPanel {
         } catch (InterruptedException ex) {
         }
         
-        // If the log in or register failed, back out 
-        if(!loggedIn){
-            System.out.println("fail");
-            return;
-        }
+        // If the log in/register failed, back out 
+        if(!loggedIn)
+            return;        
         
         // Try to create the bittle directory
         // If it already exists, rootpath will be updated
@@ -457,8 +469,12 @@ final class BittlePanel extends javax.swing.JPanel {
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }
+        
+        // Add the current user to the share
         share.addUser(username);
-        store();    // Store the new information
+        
+        // Store all the new information 
+        store();
         
         // Show the appropriate screens and text 
         load();
@@ -469,30 +485,41 @@ final class BittlePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_LoginButtonActionPerformed
 
     private void LogOutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LogOutButtonActionPerformed
-        // TODO: add proper logout code here
+
+        // Log out from the server and initialize state
         logout();
         
         // Update the login screen and file tree
         LoggedInPanel.setVisible(false);
         LogInPanel.setVisible(true);
         fileTree.updateTree();
-        focusLoginButton();
+        //focusLoginButton();
     }//GEN-LAST:event_LogOutButtonActionPerformed
 
     private void ChangePassButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ChangePassButtonActionPerformed
+        
+        // Get the user input 
         String pass = currPassField.getText();
         String newPass = newPassField.getText();
         
+        // Set up the wait flag
         waitingForResponse = true;
+        
+        // Send the input to the server 
         connection.changePass(username, pass, newPass);
         
+        // If the server didn't respond, notify the timeout 
         if(!waitForResponse()){
             NotifyDescriptor nd = new NotifyDescriptor.Message("Waiting for server timed out...", NotifyDescriptor.ERROR_MESSAGE);
             DialogDisplayer.getDefault().notify(nd);
         }
     }//GEN-LAST:event_ChangePassButtonActionPerformed
     
-    void logout(){
+    /**
+     * If the user is logged in
+     * Logs out from the server and resets preferences 
+     */
+    public void logout(){
         if(loggedIn){
             connection.logout();
             loggedIn = false;
@@ -502,21 +529,27 @@ final class BittlePanel extends javax.swing.JPanel {
         }
     }
     
+    /**
+     * Loads GUI labels with most up to date preferences 
+     */
     void load() {
         UsernameField.setText(NbPreferences.forModule(BittlePanel.class).get("username", ""));
         PasswordField.setText(NbPreferences.forModule(BittlePanel.class).get("password", ""));
-        CurrentDirectoryField.setText(NbPreferences.forModule(BittlePanel.class).get("rootpath", ""));
+        CurrentDirectoryField.setText(NbPreferences.forModule(BittlePanel.class).get("path", ""));
     }
 
+    /**
+     * Stores new preferences 
+     */
     void store() {
         NbPreferences.forModule(BittlePanel.class).put("username", username);
         NbPreferences.forModule(BittlePanel.class).put("password", password);
         NbPreferences.forModule(BittlePanel.class).putBoolean("status", loggedIn);
-        share.setPath(rootpath);
+        NbPreferences.forModule(BittlePanel.class).put("path", rootpath);
     }
 
     boolean valid() {
-        // TODO check whether form is consistent and complete
+        // N/A
         return true;
     }
 
@@ -566,10 +599,12 @@ final class BittlePanel extends javax.swing.JPanel {
     /**
      * Creates a new directory for Bittle files
      * @param newPath - the folder where the Bittle directory will be created
-     * @param moveFiles - lets the program know the to move the Bittle directory
+     * @param moveFiles - true if files need to be migrated to new folder, false otherwise 
      */
     private void createBittleDirectory(String newPath, boolean moveFiles) throws IOException{
         
+        // If the new folder is not a folder named "Bittle"
+        // Make the a "Bittle" folder in it 
         if(!newPath.substring(newPath.lastIndexOf("\\")).equals("\\Bittle"))
             newPath = newPath + "\\Bittle";
         
@@ -586,10 +621,14 @@ final class BittlePanel extends javax.swing.JPanel {
                 Exceptions.printStackTrace(ex);
                 }
         }
+        // need to add else here to handle files already existing in new folder 
         
+        // If we need to migrate files
+        // Do so unless we aren't really moving folders 
         if(moveFiles && !rootpath.equals(newPath))
                 moveDirectories(rootpath, newPath);
         
+        // Update the path 
         rootpath = newPath;
     }
     
@@ -623,21 +662,37 @@ final class BittlePanel extends javax.swing.JPanel {
         Files.delete(oldBittleFolder);
     }
 
+    /* Doesn't work :/
     private void focusLoginButton() {
         this.requestFocusInWindow();
         LogInPanel.requestFocusInWindow();
         LoginButton.requestFocusInWindow();
-    }
+    }*/
 
-    private void checkResponse(Response r) {
+    /**
+     * Handles response events from the server 
+     * If the response is a failed response, tells the user why and returns
+     * Otherwise perform the appropriate action depending on the response type 
+     * @param r Response message from the server 
+     */
+    private void handleResponse(Response r) {
+        
+        // Response has arrived, stop waiting 
         waitingForResponse = false;
+        
+        // Notify any failures
         if(r.getStatus().equals("failed")){
             loggedIn = false;
             NotifyDescriptor nd = new NotifyDescriptor.Message(r.getReason(), NotifyDescriptor.ERROR_MESSAGE);
             DialogDisplayer.getDefault().notify(nd);
             return;
         }
+        
+        // If no failures, check what kind of success response is being given 
         switch (r.getID()) {
+            
+            // Thank the user and log in  on register response 
+            // Set logged in flag to true 
             case "register":
                 {
                     loggedIn = true;
@@ -646,6 +701,8 @@ final class BittlePanel extends javax.swing.JPanel {
                     connection.login(username, password);
                     break;
                 }
+            // Welcome the user back on log in response
+            // Set logged in flag to true 
             case "login":
                 {
                     loggedIn = true;
@@ -653,6 +710,7 @@ final class BittlePanel extends javax.swing.JPanel {
                     DialogDisplayer.getDefault().notify(nd);
                     break;
                 }
+            // Notify success of password change response    
             case "changePass":
                 {
                     NotifyDescriptor nd = new NotifyDescriptor.Message("Password successfully changed!", NotifyDescriptor.INFORMATION_MESSAGE);
@@ -664,16 +722,24 @@ final class BittlePanel extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * Waits by putting thread to sleep for 50ms
+     * Spins on response flag, which is changed in response handler
+     * If the thread has been spinning for too long, time out
+     * @return false if waiting timed out, true otherwise 
+     */
     private boolean waitForResponse() {
         int timer = 0;
+                
         while(waitingForResponse){
-            if(timer > 1000){
+            if(timer > 1000)
                 return false;
-            }
+            
             try {
                 TimeUnit.MILLISECONDS.sleep(50);
             } catch (InterruptedException ex) {
             }
+            
             timer++;
         }
         return true;

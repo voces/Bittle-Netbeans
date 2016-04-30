@@ -1,5 +1,6 @@
 package org.bittle.installer;
 
+import com.eclipsesource.json.JsonValue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.nio.file.Paths;
@@ -38,7 +39,6 @@ public class Installer extends org.openide.modules.ModuleInstall implements Runn
     
     @Override
     public boolean closing() {
-        BittleOptionsPanelController.getInstance().logOut();
         connection.close();
         return true;
     }
@@ -46,6 +46,9 @@ public class Installer extends org.openide.modules.ModuleInstall implements Runn
     @Override
     public void run() {
 
+        // Get the connection to the server
+        // Listen for invitation and update messages
+        // Handle them appropriately 
         connection = Connection.getInstance();
         connection.addMessageListener((Message m) -> {
             if(m instanceof Invitation)
@@ -142,8 +145,16 @@ public class Installer extends org.openide.modules.ModuleInstall implements Runn
         EditorRegistry.addPropertyChangeListener(l);
     }
 
+    /**
+     * If a client recieves an invitation, they must either accept or decline
+     * @param i Invitation from server
+     */
     private void handleInvitation(Invitation i) {
+        
+        // Get the user that invited the client 
         String inviter = i.getBlame();
+        
+        // Ask the client if they want to accept the invitation
         NotifyDescriptor nd = new NotifyDescriptor.Confirmation(
                 inviter + " has invited you to a share session. \n Do you accept?", 
                 "Invitation Recieved!", 
@@ -151,23 +162,39 @@ public class Installer extends org.openide.modules.ModuleInstall implements Runn
                 NotifyDescriptor.QUESTION_MESSAGE
         );
         
+        // If they do, send the server an accept
         if(DialogDisplayer.getDefault().notify(nd) == NotifyDescriptor.YES_OPTION){
             connection.accept(inviter, i.getshareID());
         }
+        // Otherwise, send the server an decline 
         else{
             connection.decline(inviter, i.getshareID());
         }
     }
 
+    /**
+     * Checks the id of the update and handles it appropriately
+     * @param u Update from the server
+     */
     private void handleUpdate(Update u) {
+        // If the update is an add file update
         if(u.getID().equals("addFile")){
+            
+            // Get the user that added the file 
             String changer = u.getBlame();
-            String addedFile = u.getChange("fileame");
-            NotifyDescriptor nd = new NotifyDescriptor.Message(
-                    u.getBlame() + " has added " + addedFile + " to the share session"
-                    , NotifyDescriptor.INFORMATION_MESSAGE
-            );
-            DialogDisplayer.getDefault().notify(nd);
+            
+            // Ignore files added by the client 
+            if(!changer.equals(Share.getInstance().getMe())){
+                // Get the name of the added file 
+                String addedFile = u.getChange("filename").asString();
+                NotifyDescriptor nd = new NotifyDescriptor.Message(
+                        u.getBlame() + " has added " + addedFile + " to the share session"
+                        , NotifyDescriptor.INFORMATION_MESSAGE
+                );
+                DialogDisplayer.getDefault().notify(nd);
+                if(!Share.getInstance().files.contains(addedFile))
+                    connection.get(addedFile);
+            }
         }
     }
 }

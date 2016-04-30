@@ -8,9 +8,10 @@ package org.bittle.messages;
 import java.util.EventListener;
 
 /**
- *
+ * Interface for a listener that listens for messages from the server 
  * @author chmar
  */
-public interface MessageListener extends EventListener  {
-    public void messageRecieved(Message m);
+public interface MessageListener extends EventListener {
+    
+    public void messageRecieved(Message m);    // Perform an action when message is recieved 
 }

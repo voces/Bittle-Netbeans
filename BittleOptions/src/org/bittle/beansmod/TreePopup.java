@@ -14,7 +14,7 @@ import org.bittle.messages.*;
 import org.openide.*;
 
 /**
- *
+ * Pop Up menu for file tree
  * @author chmar
  */
 public class TreePopup extends JPopupMenu{
@@ -25,12 +25,14 @@ public class TreePopup extends JPopupMenu{
     public TreePopup(JTree tree, DefaultTreeModel treeModel) {
         
         // Get the instance of the Connection
+        // Listen for response messages from the server
+        // If a response is recieved while waiting for one, handle it
         connection = Connection.getInstance();
         connection.addMessageListener((Message m) -> {
             if(m instanceof Response){
                 if(waitingForResponse){
                     waitingForResponse = false;
-                    checkResponse((Response) m);
+                    handleResponse((Response) m);
                 }
             }
         });
@@ -39,6 +41,9 @@ public class TreePopup extends JPopupMenu{
         JMenuItem invite = new JMenuItem("Invite");
         JMenuItem remove = new JMenuItem("Remove");
         
+        // invite choice action
+        // Prompts the user for who they want to invite
+        // Gets user input and attempts to invite that user to the session
         invite.addActionListener((ActionEvent e) ->{
             NotifyDescriptor.InputLine shareMessage = new NotifyDescriptor.InputLine("Username: ",
                                                                                      "Who do you want to invite to the session?", 
@@ -82,7 +87,12 @@ public class TreePopup extends JPopupMenu{
         add(remove);
     }
 
-    private void checkResponse(Response r){
+    /**
+     * If the response status is failed, give the reason why
+     * Otherwise, notify success
+     * @param r Response from server 
+     */
+    private void handleResponse(Response r){
         if(r.getStatus().equals("failed")){
             NotifyDescriptor nd = new NotifyDescriptor.Message(r.getReason(), NotifyDescriptor.ERROR_MESSAGE);
             DialogDisplayer.getDefault().notify(nd);
@@ -93,18 +103,26 @@ public class TreePopup extends JPopupMenu{
         }
     }
 
+    /**
+     * Waits by putting thread to sleep for 50ms
+     * Spins on response flag, which is changed in response handler
+     * If the thread has been spinning for too long, notify time out
+     */
     private void waitForResponse() {
         int timer = 0;
+        
         while(waitingForResponse){
             if(timer > 100){
                 NotifyDescriptor nd = new NotifyDescriptor.Message("Waiting for server timed out...", NotifyDescriptor.ERROR_MESSAGE);
                 DialogDisplayer.getDefault().notify(nd);
                 break;
             }
+            
             try {
                 TimeUnit.MILLISECONDS.sleep(50);
             } catch (InterruptedException ex) {
             }
+            
             timer ++;
         }
     }

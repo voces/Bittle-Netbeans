@@ -9,23 +9,26 @@ import com.eclipsesource.json.*;
 import java.util.List;
 
 /**
- *
+ * shareSession Message
+ * This is used to give an invited client a new share session 
  * @author chmar
  */
 public class shareSession implements Message{
     
-    private JsonObject response;
-    private String id;
-    private List<JsonValue> files;
-    private List<JsonValue> names;
+    private JsonObject session;       // JSON message from server 
+    private String id;                // Message ID
+    private List<JsonValue> files;    // Files in shares session    
+    private List<JsonValue> names;    // Users in share session 
     
-    public shareSession(JsonObject response, String id){
-        this.response = response;
+    // Initialize all the fields 
+    public shareSession(JsonObject session, String id){
+        this.session = session;
         this.id = id;
-        this.files = response.get("files").asArray().values();
-        this.names = response.get("names").asArray().values();
+        this.files = session.get("files").asArray().values();
+        this.names = session.get("names").asArray().values();
     }
 
+    // Getters for all the fields 
     @Override
     public String getID() {
         return id;

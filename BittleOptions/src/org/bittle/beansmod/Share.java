@@ -10,17 +10,20 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.prefs.PreferenceChangeEvent;
+import java.util.prefs.Preferences;
 import org.bittle.messages.*;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.NbPreferences;
 import org.openide.windows.WindowManager;
 
 /**
  * A Singleton that represents the user's current share session
- * Contains two hash sets: one for the users in the share, and one
- * for the files being shared.
+ * Contains two hash sets: one for the users in the share, 
+ * and one for the files being shared.
  * Files being shared has 1 to 1 correspondence with bittle directory
  * and GUI tree
  * @author chmar
@@ -31,51 +34,76 @@ public class Share {
         
     private final BittleTreeTopComponent fileTree;
     private final Connection connection;
+    private final Preferences preferences;
     
-    public static HashSet<String> users;
-    public static HashSet<String> files;  
-    private static String bittlePath;
     private boolean waitingForResponse;
+    private String bittlePath;
+    private String me;
+    private String owner;
+    
+    public HashSet<String> users;
+    public HashSet<String> files; 
     
     // Initialize the instance
     static{
         instance = new Share();
-        users = new HashSet<>();
-        files = new HashSet<>();
-        bittlePath = null;
-
     }
     
+    // Share Consturctor 
     private Share() {
+        
+        // Find the GUI tree
         fileTree = (BittleTreeTopComponent) WindowManager.getDefault().findTopComponent("BittleTree");
+        
+        // Initialize what needs initializing 
+        waitingForResponse = false;
+        users = new HashSet<>();
+        files = new HashSet<>();
+        
+        // Get the connection to the server
+        // Add a lister to it that is only interested in response messages
+        // If the share is waiting for a response, stop waiting and handle response
         connection = Connection.getInstance();
         connection.addMessageListener((Message m) -> {
             if(m instanceof Response){
                 if(waitingForResponse){
                     waitingForResponse = false;
-                    checkReponse((Response) m);
+                    handleResponse((Response) m);
                 }
             }
         });
         
-        waitingForResponse = false;
+        // Gets the preferences stored in the options
+        // If the rootpath preference changes, update the bittlePath
+        preferences = NbPreferences.forModule(BittlePanel.class);
+        preferences.addPreferenceChangeListener((PreferenceChangeEvent evt) -> {
+            if(evt.getKey().equals("path"))
+                bittlePath = evt.getNewValue();
+        });
     }
     
+    /**
+     * @return The instance of the share
+     */
     public static Share getInstance(){
         return instance;
     }
     
-    void addUser(String username) {
+    /**
+     * Adds user to share if they are not already in it
+     * @param username User to be added to the share
+     */
+    public void addUser(String username) {
         if(!users.contains(username))
             users.add(username);
     }
     
     /**
      * Expects a path of form "/folderA/folderB/file.txt"
-     * Checks if "file.txt" is being synced
-     * If it is not, adds the file to the list and begins syncing 
-     * @param filePath path of the new file to be added
-     * @return true if the file was added, false otherwise
+     * Adds file to share if it is not already in it.
+     * Adds file to list, folder, GUI tree, and requests
+     * server to track file 
+     * @param filePath path of the new file to be added to the share 
      */
     public void addFile(String filePath) throws IOException{
         String fileName = getFileName(filePath);
@@ -85,36 +113,42 @@ public class Share {
             fileTree.addObject(fileName);
             trackFile(fileName);
         }
-        else{
-            NotifyDescriptor nd = new NotifyDescriptor.Message(fileName + " already being synced!", NotifyDescriptor.ERROR_MESSAGE);
-            DialogDisplayer.getDefault().notify(nd);
-        }
+    }
+    
+    public void addFileFromServer(String fileName){
+        // TODO: Transform filename and array of lines into a file
+        // and add it to the share 
     }
     
     /**
      * Expects a file name of the form "file.txt"
-     * Removes the file from the sync list if it exists
-     * Removes the file from the bittle folder if it exists
+     * Removes from share if it is in it.
+     * Removes file from list, folder and requests server to
+     * stop tracking file. 
      * Note: This method does not remove the file from the tree
      * This should be handled after calling this function
      * @param fileName name of the file to be removed
      */
     public void removeFile(String fileName) throws IOException{
-        FileObject fo = FileUtil.toFileObject(FileUtil.normalizeFile(new File(getBittleFilePath(fileName))));
-        if(!fo.isLocked()){
-            Files.deleteIfExists(Paths.get(getBittleFilePath(fileName)));
+        if(files.contains(fileName)){
+            // Get the file object from the bittle directory 
+            FileObject fo = FileUtil.toFileObject(FileUtil.normalizeFile(new File(getBittleFilePath(fileName))));
+            
+            // Do not attempt to delete a locked file 
+            if(!fo.isLocked()){
+                Files.deleteIfExists(Paths.get(getBittleFilePath(fileName)));
             files.remove(fileName);
-        }
-        else{
-            NotifyDescriptor nd = new NotifyDescriptor.Message("Can not remove locked file " + fileName, NotifyDescriptor.ERROR_MESSAGE);
-            DialogDisplayer.getDefault().notify(nd);
+            }
+            else{
+                NotifyDescriptor nd = new NotifyDescriptor.Message("Can not remove locked file " + fileName, NotifyDescriptor.ERROR_MESSAGE);
+                DialogDisplayer.getDefault().notify(nd);
+            }
         }
     }
-        
+    
     /**
      * Scans the current bittle directory
-     * Any files that are not in the sync list
-     * Are added to the sync list and the file tree
+     * Any files that are not in the share are added 
      */
     public void scanFolder(){
         String[] filesInBittleFolder = new File(bittlePath).list();
@@ -128,6 +162,9 @@ public class Share {
         }
     }
     
+    /**
+     * Removes all the files from the share 
+     */
     public void clearList() throws IOException{
         Object[] fileArray = files.toArray();
         for(int i = 0; i < fileArray.length; i++){
@@ -136,11 +173,10 @@ public class Share {
     }
     
     /**
-     * Checks if a file exists in the bittle directory.
-     * If it does, it returns the path of that file in the directory
-     * If it doesn't it returns null
-     * @param fileName file name of the form file.txt
-     * @return The path of that file in the Bittle directory, if it exists
+     * If a file exists in the share, returns it's file path 
+     * @param fileName File name of the form file.txt
+     * @return File path of the form /folder/Bittle/file.txt,
+     * null if given file name does not exist in the share.
      */
     public String getBittleFilePath(String fileName){
         if(files.contains(fileName)){
@@ -150,15 +186,16 @@ public class Share {
             return null;
     }
     
-    public void setPath(String rootpath){
-        bittlePath = rootpath;
+    /**
+     * @return Username of the current user 
+     */
+    public String getMe(){
+        return me;
     }
     
     /**
-     * Expects a path of form "/folderA/folderB/file.txt"
-     * Returns a string with "file.txt"
-     * @param filePath path of desired file name
-     * @return tring - name of file at given path
+     * @param filePath path of the form "/folderA/folderB/file.txt"
+     * @return Name of file at given path of the form "file.txt"
      */
     private String getFileName(String filePath) {
         return Paths.get(filePath).getFileName().toString();
@@ -230,13 +267,19 @@ public class Share {
             DialogDisplayer.getDefault().notify(nd);
             
             waitingForResponse = true;
-            connection.track(filePath, lines);
+            connection.track(fileName, lines);
             waitForResponse();
         } catch (IOException ex) {
         }   
     }
 
-    private void checkReponse(Response r) {
+    /**
+     * Handles response events from the server 
+     * If the response is a failed response, gives the reason and returns 
+     * Otherwise notify the success response 
+     * @param r Response message from the server 
+     */
+    private void handleResponse(Response r) {
         if(r.getStatus().equals("failed")){
             NotifyDescriptor nd = new NotifyDescriptor.Message(r.getReason(), NotifyDescriptor.ERROR_MESSAGE);
             DialogDisplayer.getDefault().notify(nd);
@@ -247,21 +290,27 @@ public class Share {
         }
     }
     
+    /**
+     * Waits by putting thread to sleep for 50ms
+     * Spins on response flag, which is changed in response handler
+     * If the thread has been spinning for too long, notify time out
+     */
     private void waitForResponse() {
         int timer = 0;
+        
         while(waitingForResponse){
             if(timer > 100){
                 NotifyDescriptor nd = new NotifyDescriptor.Message("Waiting for server timed out...", NotifyDescriptor.ERROR_MESSAGE);
                 DialogDisplayer.getDefault().notify(nd);
                 break;
             }
+            
             try {
                 TimeUnit.MILLISECONDS.sleep(50);
             } catch (InterruptedException ex) {
             }
+            
             timer ++;
         }
     }
-
-
 }

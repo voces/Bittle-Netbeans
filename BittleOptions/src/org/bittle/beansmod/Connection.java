@@ -23,8 +23,8 @@ public class Connection {
  
     //singleton
     private static final Connection instance;
-    //public static JsonObject response = null;
     
+    // List of Message listeners 
     private static final List<MessageListener> listeners = new ArrayList<>();
     
     static {
@@ -69,46 +69,50 @@ public class Connection {
         // Parse the message as a JSON object
         JsonObject jsonMessage = Json.parse(msg).asObject();
         
-        // Get the 'id' field of the JSON object 
+        // Get the id field of the JSON object 
         String id = jsonMessage.getString("id", null);
         
-        // The response that will be fired off to the listeners
-        Message response;
+        // The message that will be fired off to the listeners
+        Message message;
         
-        //System.out.println("============id is " + id + "=============");
         
-        //big switch statement goes here based on the response's id
-        // Do we really need a switch statement here?
-        // We can just send the JSON response to whoever is expecting it 
+        // Check the id of the message from the server 
         switch(id){
             case "register":
             case "login":
             case "logout":
             case "track":
             case "changePass":
-                response = new Response(jsonMessage, id);
+                // These messages will always be a response 
+                message = new Response(jsonMessage, id);
                 break;
             case "invite":
                 // Invite messages will either be a response or an invitation
-                // If there is a status in the JSON, it is a response
+                // Response messages have non null status field 
                 if(jsonMessage.getString("status", null) != null)
-                    response = new Response(jsonMessage, id);
-                // Otherwise send the invitation
+                    message = new Response(jsonMessage, id);
                 else
-                    response = new Invitation(jsonMessage, id);
+                    message = new Invitation(jsonMessage, id);
                 break;
             case "addFile":
-                // May need to request new file here
-                response = new Update(jsonMessage, id);
+                // Update the client when a new file is added to the share 
+                // May need to request the new file here
+                message = new Update(jsonMessage, id);
+                break;
             case "addClient":
-                response = new shareSession(jsonMessage, id);
+                // Always adding a new share session with this message
+                message = new shareSession(jsonMessage, id);
+                break;
             case "lines":
             case "line":
+                // Don't know what to do for these yet 
             default:
-                response = null;
+                message = null;
                 break;
         }
-        fireMessage(response);
+        
+        // Send the message to all the listeners 
+        fireMessage(message);
         
         //on the message responding to an editor change, check awaitingServerResponseForEdit flag; true = don't update, false = update
         //not the best solution because this client won't get any editor updates until getting a response from the server?
@@ -137,20 +141,11 @@ public class Connection {
     }
     
     public void close() {
-        if(session != null)
+        if(session != null){
+            BittleOptionsPanelController.getInstance().logOut();
             session.close();
+        }
     }
-    
-    /**
-     * Parses a response from the server 
-     * If the id matches the given id, check the status
-     * If the status is failed, displays the reason for failure
-     * @param id the kind of response being checked
-     * @return true if the response matched the given id and didn't fail, 
-     * false otherwise 
-     */
-    //public boolean checkResponse(String id){        
-    //}
     
     private void sendMessage(String message) {
         try {
@@ -260,33 +255,45 @@ public class Connection {
         JsonObject file = Json.object().add("id", "track").add("filename", filename);
         JsonArray linesArray = Json.array(lines);
         file.add("lines", linesArray);
-        
         sendMessage(file.toString());
     }
     
     public void invite(String username){
-        JsonObject invitation = Json.object().add("id", "invite").add("name", username);
-        sendMessage(invitation.toString());
+        sendMessage(Json.object().add("id", "invite").add("name", username).toString());
     }
     
     public void accept(String username, int shareID){
-        JsonObject accept = Json.object().add("id", "accept").add("blame", username).add("shareId", shareID);
-        sendMessage(accept.toString());
+        sendMessage(Json.object().add("id", "accept").add("blame", username).add("shareId", shareID).toString());
     }
     
     public void decline(String username, int shareID){
-        JsonObject decline = Json.object().add("id", "decline").add("blame", username).add("shareId", shareID);
-        sendMessage(decline.toString());
+        sendMessage(Json.object().add("id", "decline").add("blame", username).add("shareId", shareID).toString());
+    }
+    
+    public void get(String filename){
+        sendMessage(Json.object().add("id", "get").add("filename", filename).toString());
     }
 
+    /**
+     * Adds a listener to the list 
+     * @param l Listener to be added 
+     */
     public void addMessageListener(MessageListener l) {
         listeners.add(l);
     }
     
+    /**
+     * Removes a listner from the list
+     * @param l Listen to be removed 
+     */
     public void removeMessageListner(MessageListener l){
         listeners.remove(l);
     }
 
+    /**
+     * Sends a message to all listners
+     * @param m Message being sent to listeners 
+     */
     private void fireMessage(Message m) {
         Iterator listenerIterator = listeners.iterator();
         while(listenerIterator.hasNext()){

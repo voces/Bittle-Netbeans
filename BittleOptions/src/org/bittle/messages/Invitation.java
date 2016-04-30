@@ -8,16 +8,17 @@ package org.bittle.messages;
 import com.eclipsesource.json.JsonObject;
 
 /**
- *
+ * Invitation Message
  * @author chmar
  */
 public class Invitation implements Message{
     
-    private JsonObject invitation;
-    private String id;
-    private String blame;
-    private int shareID;
+    private JsonObject invitation;    // JSON message from server
+    private String id;                // Message id
+    private String blame;             // User that sent the invitation 
+    private int shareID;              // Share session id
     
+    // Initialize all the fields 
     public Invitation(JsonObject invitation, String id){
         this.invitation = invitation;
         this.id = id;
@@ -26,6 +27,7 @@ public class Invitation implements Message{
         
     }
 
+    // Getters for all the fields 
     @Override
     public String getID() {
         return id;

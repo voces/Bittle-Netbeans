@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.bittle.beansmod;
 
 import java.beans.PropertyChangeListener;
@@ -12,7 +7,6 @@ import javax.swing.SwingUtilities;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
-import org.openide.util.NbPreferences;
 
 @OptionsPanelController.TopLevelRegistration(
         categoryName = "#OptionsCategory_Name_Bittle",
@@ -28,9 +22,9 @@ public final class BittleOptionsPanelController extends OptionsPanelController {
     private static final BittleOptionsPanelController instance;
     private BittlePanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
-    Connection connection = Connection.getInstance();
     private boolean changed;
     
+    // Singleton 
     static{
         instance = new BittleOptionsPanelController();
     }
@@ -43,10 +37,6 @@ public final class BittleOptionsPanelController extends OptionsPanelController {
     
     public void logOut(){
         getPanel().logout();
-    }
-    
-    public boolean loggedIn(){
-        return NbPreferences.forModule(BittlePanel.class).getBoolean("status", false);
     }
 
     @Override
@@ -100,7 +90,7 @@ public final class BittleOptionsPanelController extends OptionsPanelController {
     
     private BittlePanel getPanel() {
         if (panel == null) {
-            panel = new BittlePanel(this, this.connection);
+            panel = new BittlePanel(this);
         }
         return panel;
     }
