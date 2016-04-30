@@ -51,7 +51,7 @@ public final class BittleTreeTopComponent extends TopComponent {
     
     private final Preferences preferences;
     private final TreePopup treePopup;
-    private boolean loggedIn;
+    private boolean loggedIn = false;
 
     public BittleTreeTopComponent() {
         // Set up the GUI window 
@@ -66,12 +66,14 @@ public final class BittleTreeTopComponent extends TopComponent {
         // Listen for changes to "status" preference
         // Update log in state on any changes 
         preferences = NbPreferences.forModule(BittlePanel.class);
+        
+        /*
         preferences.addPreferenceChangeListener((PreferenceChangeEvent evt) -> {
             if(evt.getKey().equals("status")){
                 loggedIn = evt.getNode().getBoolean("status", loggedIn);
                 updateTree();
             }
-        });
+        });*/
     }
     
     /**
@@ -333,6 +335,7 @@ public final class BittleTreeTopComponent extends TopComponent {
      * - Otherwise, displays the not logged in screen
      */
     public void updateTree(){
+        loggedIn = preferences.getBoolean("status", loggedIn);
         if(loggedIn){
             Share.getInstance().scanFolder();
             treeModel.reload();

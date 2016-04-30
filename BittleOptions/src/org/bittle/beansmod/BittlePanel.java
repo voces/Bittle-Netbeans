@@ -546,6 +546,7 @@ final class BittlePanel extends javax.swing.JPanel {
         NbPreferences.forModule(BittlePanel.class).put("password", password);
         NbPreferences.forModule(BittlePanel.class).putBoolean("status", loggedIn);
         NbPreferences.forModule(BittlePanel.class).put("path", rootpath);
+        Share.getInstance().setPath(rootpath);
     }
 
     boolean valid() {
