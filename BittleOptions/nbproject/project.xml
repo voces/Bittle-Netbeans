@@ -7,14 +7,6 @@
             <suite-component/>
             <module-dependencies>
                 <dependency>
-                    <code-name-base>org.minimal.json</code-name-base>
-                    <build-prerequisite/>
-                    <compile-dependency/>
-                    <run-dependency>
-                        <specification-version>1.0</specification-version>
-                    </run-dependency>
-                </dependency>
-                <dependency>
                     <code-name-base>org.netbeans.libs.json_simple</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
@@ -165,6 +157,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jetty-util-9.3.8.v20160314.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jetty-util-9.3.8.v20160314.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/minimal-json-0.9.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/minimal-json-0.9.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jetty-io-9.3.8.v20160314.jar</runtime-relative-path>
