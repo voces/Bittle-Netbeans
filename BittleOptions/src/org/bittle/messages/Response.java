@@ -36,4 +36,9 @@ public class Response implements Message{
     public String getReason(){
         return reason;
     }
+
+    @Override
+    public void handle() {
+        
+    }
 }

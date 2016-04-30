@@ -6,6 +6,10 @@
 package org.bittle.messages;
 
 import com.eclipsesource.json.*;
+import org.bittle.beansmod.Connection;
+import org.bittle.beansmod.Share;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 
 /**
  * Update message 
@@ -43,4 +47,27 @@ public class Update implements Message{
         return update.get(changeType);
     }
     
+
+    @Override
+    public void handle() {
+                // If the update is an add file update
+        if (id.equals("addFile")) {
+
+            // Get the user that added the file 
+            String changer = blame;
+
+            // Ignore files added by the client 
+            if (!changer.equals(Share.getInstance().getMe())) {
+                // Get the name of the added file 
+                String addedFile = getChange("filename").asString();
+                NotifyDescriptor nd = new NotifyDescriptor.Message(
+                        blame + " has added " + addedFile + " to the share session", NotifyDescriptor.INFORMATION_MESSAGE
+                );
+                DialogDisplayer.getDefault().notify(nd);
+                if (!Share.getInstance().files.contains(addedFile)) {
+                    Connection.getInstance().get(addedFile);
+                }
+            }
+        }
+    }
 }

@@ -42,4 +42,9 @@ public class shareSession implements Message{
         return names;
     }
     
+
+    @Override
+    public void handle() {
+        
+    }
 }

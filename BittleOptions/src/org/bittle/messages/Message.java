@@ -7,4 +7,5 @@ package org.bittle.messages;
 public interface Message{
     
     public String getID();    // All messages have an ID
+    public void handle();
 }
