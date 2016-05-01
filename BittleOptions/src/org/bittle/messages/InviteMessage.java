@@ -39,7 +39,7 @@ public class InviteMessage implements Message{
 
     @Override
     public void handleMessage() {
-        if(status.equals("failed")){
+        if(status != null && status.equals("failed")){
             NotifyDescriptor nd = new NotifyDescriptor.Message(reason, NotifyDescriptor.ERROR_MESSAGE);
             DialogDisplayer.getDefault().notify(nd);
         }
