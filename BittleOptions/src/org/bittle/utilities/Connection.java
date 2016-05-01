@@ -1,8 +1,9 @@
-package org.bittle.beansmod;
+package org.bittle.utilities;
 
 import com.eclipsesource.json.*;
 import java.net.URI;
 import java.util.concurrent.Future;
+import org.bittle.beansmod.BittleOptionsPanelController;
 import org.bittle.messages.*;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
@@ -249,7 +250,7 @@ public class Connection {
     }
     
     public void line(String filename, int lineIndex, int start, int deleteCount, String line) {
-        sendMessage("{\"id\":\"line\", \"filename\":\"" + filename + "\", \"lineIndex\":" + lineIndex + ", \"start\":" + start + ", \"deleteCount\": " + deleteCount +  ", \"line\":" + line + "}");
+        sendMessage("{\"id\":\"line\", \"filename\":\"" + filename + "\", \"lineIndex\":" + lineIndex + ", \"start\":" + start + ", \"deleteCount\": " + deleteCount +  ", \"line\":\"" + line + "\"}");
     }
     
     //update: 4/27/16

@@ -1,5 +1,6 @@
 package org.bittle.beansmod;
 
+import org.bittle.utilities.Connection;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;

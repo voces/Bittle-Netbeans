@@ -9,6 +9,7 @@ import com.eclipsesource.json.*;
 import java.util.ArrayList;
 import java.util.List;
 import org.bittle.beansmod.*;
+import org.bittle.utilities.DocumentManipulator;
 
 /**
  *
@@ -37,10 +38,11 @@ public class lineMessage implements Message {
    
     @Override
     public void handleMessage() {
-        
         if(!blame.equals(Share.getInstance().getMe())){
-            
-            // Do stuff here...idk what...
+            if (deleteCount > 0)
+                DocumentManipulator.getInstance().deleteText(filename, start, deleteCount);
+            else
+                DocumentManipulator.getInstance().insertText(line, filename, start);
         }
     }
     

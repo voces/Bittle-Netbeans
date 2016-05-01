@@ -1,4 +1,4 @@
-package org.bittle.document;
+package org.bittle.utilities;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -10,28 +10,35 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.Element;
 import javax.swing.text.JTextComponent;
-import org.bittle.beansmod.Connection;
 import org.bittle.beansmod.Share;
 import org.json.simple.JSONArray;
 import org.netbeans.api.editor.EditorRegistry;
+import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
 import org.openide.util.Exceptions;
 import org.openide.windows.TopComponent;
 
-public class CurrentDocument {
+public class DocumentManipulator {
     private Document currentDocument;
     private DocumentListener currentDocumentListener;
     private JTextComponent currentComponent;
     private Connection connection;
     private String currentFileName = "";
+    private PropertyChangeListener listener;
     private boolean shouldIgnoreUpdates = false;
     
-    CurrentDocument() {
+    private static DocumentManipulator instance;
+    
+    public static DocumentManipulator getInstance() {
+        return instance == null ? instance = new DocumentManipulator() : instance;
+    }
+    
+    DocumentManipulator() {
         connection = Connection.getInstance();
         
         //set up the document listener
-        PropertyChangeListener l = new PropertyChangeListener() {
+        listener = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 //make sure the event is changing editors before doing anything
@@ -44,7 +51,8 @@ public class CurrentDocument {
                         }
                         currentDocument = lastFocusedComponent.getDocument(); //grab the new editor
 
-                        String filePath = FileUtil.toFile(TopComponent.getRegistry().getActivated().getLookup().lookup(DataObject.class).getPrimaryFile()).getAbsolutePath();
+                        FileObject file = TopComponent.getRegistry().getActivated().getLookup().lookup(DataObject.class).getPrimaryFile();
+                        String filePath = FileUtil.toFile(file).getAbsolutePath();
                         currentFileName = Paths.get(filePath).getFileName().toString();
 
                         if (Share.getInstance().files.contains(currentFileName)) {
@@ -111,46 +119,67 @@ public class CurrentDocument {
             }
         };
 
-        EditorRegistry.addPropertyChangeListener(l);
+        EditorRegistry.addPropertyChangeListener(listener);
     }
     
-    public synchronized void insertText(String text, String fileName, int startPosition) throws BadLocationException {
+    public void removeListener() {
+        if (listener != null)
+            EditorRegistry.removePropertyChangeListener(listener);
+    }
+    
+    public synchronized void insertText(String text, String fileName, int startPosition) {
         //this should at some point check if the file is open in an editor,
         //if it is then change the opened file's editor
         //if not, then write to the file itself
         if (fileName.equals(currentFileName)) {
             shouldIgnoreUpdates = true;
-            currentDocument.insertString(startPosition, text, null);
+            try {
+                currentDocument.insertString(startPosition, text, null);
+            } catch (BadLocationException ex) {
+                Exceptions.printStackTrace(ex);
+            }
             shouldIgnoreUpdates = false;
         }
     }
     
-    public synchronized void insertLines(String[] lines, String fileName, int startLineIndex) throws BadLocationException {
+    public synchronized void insertLines(String[] lines, String fileName, int startLineIndex) {
         if (fileName.equals(currentFileName)) {
             shouldIgnoreUpdates = true;
             for (String text : lines) {
                 Element line = currentDocument.getDefaultRootElement().getElement(startLineIndex);
                 if (line != null) {
                     //remove
-                    currentDocument.remove(line.getStartOffset(), line.getEndOffset() - line.getStartOffset());
+                    try {
+                        currentDocument.remove(line.getStartOffset(), line.getEndOffset() - line.getStartOffset());
+                    } catch (BadLocationException ex) {
+                        Exceptions.printStackTrace(ex);
+                    }
                 }
                 //add
-                currentDocument.insertString(line.getEndOffset(), text, null);
+                try {
+                    currentDocument.insertString(line.getEndOffset(), text, null);
+                } catch (BadLocationException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
                 startLineIndex++;
             }
             shouldIgnoreUpdates = false;
         }
     }
     
-    public synchronized void deleteText(String fileName, int startPosition, int deleteCount) throws BadLocationException {
+    public synchronized void deleteText(String fileName, int startPosition, int deleteCount) {
         if (fileName.equals(currentFileName)) {
             shouldIgnoreUpdates = true;
-            currentDocument.remove(startPosition, deleteCount);
+            try {
+                currentDocument.remove(startPosition, deleteCount);
+            } catch (BadLocationException ex) {
+                Exceptions.printStackTrace(ex);
+            }
             shouldIgnoreUpdates = false;
         }
     }
     
-    public synchronized void deleteLines(String[] lines, String fileName, int startLineIndex, int deleteCount) throws BadLocationException {
+    public synchronized void deleteLines(String[] lines, String fileName, int startLineIndex, int deleteCount) {
         if (fileName.equals(currentFileName)) {
             shouldIgnoreUpdates = true;
             int lineNumber = startLineIndex;
@@ -158,13 +187,21 @@ public class CurrentDocument {
             //remove lines
             for (int i = 0; i < deleteCount; i++) {
                 currentLine = currentDocument.getDefaultRootElement().getElement(lineNumber);
-                currentDocument.remove(currentLine.getStartOffset(), currentLine.getEndOffset());
+                try {
+                    currentDocument.remove(currentLine.getStartOffset(), currentLine.getEndOffset());
+                } catch (BadLocationException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
                 lineNumber++;
             }
             //add lines
             for (String line : lines) {
                 currentLine = currentDocument.getDefaultRootElement().getElement(startLineIndex);
-                currentDocument.insertString(currentLine.getEndOffset(), line, null);
+                try {
+                    currentDocument.insertString(currentLine.getEndOffset(), line, null);
+                } catch (BadLocationException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
                 startLineIndex++;
             }
             shouldIgnoreUpdates = false;
