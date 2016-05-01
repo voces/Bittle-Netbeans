@@ -24,6 +24,8 @@ public class CurrentDocument {
     private DocumentListener currentDocumentListener;
     private JTextComponent currentComponent;
     private Connection connection;
+    private String currentFileName = "";
+    private boolean shouldIgnoreUpdates = false;
     
     CurrentDocument() {
         connection = Connection.getInstance();
@@ -43,9 +45,9 @@ public class CurrentDocument {
                         currentDocument = lastFocusedComponent.getDocument(); //grab the new editor
 
                         String filePath = FileUtil.toFile(TopComponent.getRegistry().getActivated().getLookup().lookup(DataObject.class).getPrimaryFile()).getAbsolutePath();
-                        String fileName = Paths.get(filePath).getFileName().toString();
+                        currentFileName = Paths.get(filePath).getFileName().toString();
 
-                        if (Share.getInstance().files.contains(fileName)) {
+                        if (Share.getInstance().files.contains(currentFileName)) {
                             //if the file is being shared, attach a listener to its document
                             currentDocument.addDocumentListener(currentDocumentListener = new DocumentListener() {
 
@@ -56,46 +58,50 @@ public class CurrentDocument {
 
                                 @Override
                                 public void insertUpdate(DocumentEvent e) {
-                                    //send message
-                                    int startingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset());
-                                    int endingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset() + e.getLength());
-                                    String addedText = null;
-                                    try {
-                                        addedText = currentDocument.getText(e.getOffset(), e.getLength());
-                                    } catch (BadLocationException ex) {
-                                        Exceptions.printStackTrace(ex);
-                                    }
-                                    if (startingLineNumber != endingLineNumber) {
-                                        //multi-line insert, split lines and send as JSON array of strings
-                                        String[] lines = addedText.split("\\r?\\n");
-                                        String JSONlines = JSONArray.toJSONString(Arrays.asList(lines));
-                                        connection.lines(fileName, e.getOffset(), 0, JSONlines);
-                                    } else {
-                                        //single-line insert
-                                        connection.line(fileName, startingLineNumber, e.getOffset(), 0, addedText);
+                                    if (!shouldIgnoreUpdates) {
+                                        //send message
+                                        int startingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset());
+                                        int endingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset() + e.getLength());
+                                        String addedText = null;
+                                        try {
+                                            addedText = currentDocument.getText(e.getOffset(), e.getLength());
+                                        } catch (BadLocationException ex) {
+                                            Exceptions.printStackTrace(ex);
+                                        }
+                                        if (startingLineNumber != endingLineNumber) {
+                                            //multi-line insert, split lines and send as JSON array of strings
+                                            String[] lines = addedText.split("\\r?\\n");
+                                            String JSONlines = JSONArray.toJSONString(Arrays.asList(lines));
+                                            connection.lines(currentFileName, e.getOffset(), 0, JSONlines);
+                                        } else {
+                                            //single-line insert
+                                            connection.line(currentFileName, startingLineNumber, e.getOffset(), 0, addedText);
+                                        }
                                     }
                                 }
 
                                 @Override
                                 public void removeUpdate(DocumentEvent e) {
-                                    //send message
-                                    int startingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset()); //line # of cursor after the delete
-                                    int endingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset() + e.getLength()); //line # of the last part of deleted text
-                                    //lineEnd will default to the last line if the line number it used to be on exceeds the new line count, so check for that as well
-                                    if (startingLineNumber != endingLineNumber || e.getOffset() + e.getLength() > currentDocument.getLength()) {
-                                        //get line of text of the current line (lineStart)
-                                        Element currentLine = currentDocument.getDefaultRootElement().getElement(startingLineNumber);
-                                        String currentLineText = null;
-                                        try {
-                                            currentLineText = currentDocument.getText(currentLine.getStartOffset(), currentLine.getEndOffset() - currentLine.getStartOffset());
-                                            currentLineText = currentLineText.replace("\n", ""); //strip the newline
-                                            connection.lines(fileName, e.getOffset(), e.getLength(), "[\"" + currentLineText + "\"]");
-                                        } catch (BadLocationException ex) {
-                                            Exceptions.printStackTrace(ex);
+                                    if (!shouldIgnoreUpdates) {
+                                        //send message
+                                        int startingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset()); //line # of cursor after the delete
+                                        int endingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset() + e.getLength()); //line # of the last part of deleted text
+                                        //lineEnd will default to the last line if the line number it used to be on exceeds the new line count, so check for that as well
+                                        if (startingLineNumber != endingLineNumber || e.getOffset() + e.getLength() > currentDocument.getLength()) {
+                                            //get line of text of the current line (lineStart)
+                                            Element currentLine = currentDocument.getDefaultRootElement().getElement(startingLineNumber);
+                                            String currentLineText = null;
+                                            try {
+                                                currentLineText = currentDocument.getText(currentLine.getStartOffset(), currentLine.getEndOffset() - currentLine.getStartOffset());
+                                                currentLineText = currentLineText.replace("\n", ""); //strip the newline
+                                                connection.lines(currentFileName, e.getOffset(), e.getLength(), "[\"" + currentLineText + "\"]");
+                                            } catch (BadLocationException ex) {
+                                                Exceptions.printStackTrace(ex);
+                                            }
+                                        } else {
+                                            //single-line insert
+                                            connection.line(currentFileName, startingLineNumber, e.getOffset(), e.getLength(), "");
                                         }
-                                    } else {
-                                        //single-line insert
-                                        connection.line(fileName, startingLineNumber, e.getOffset(), e.getLength(), "");
                                     }
                                 }
                             });
@@ -108,11 +114,60 @@ public class CurrentDocument {
         EditorRegistry.addPropertyChangeListener(l);
     }
     
-    public void InsertOnLine() {
-        
+    public synchronized void insertText(String text, String fileName, int startPosition) throws BadLocationException {
+        //this should at some point check if the file is open in an editor,
+        //if it is then change the opened file's editor
+        //if not, then write to the file itself
+        if (fileName.equals(currentFileName)) {
+            shouldIgnoreUpdates = true;
+            currentDocument.insertString(startPosition, text, null);
+            shouldIgnoreUpdates = false;
+        }
     }
     
-    public void InsertLines() {
-        
+    public synchronized void insertLines(String[] lines, String fileName, int startLineIndex) throws BadLocationException {
+        if (fileName.equals(currentFileName)) {
+            shouldIgnoreUpdates = true;
+            for (String text : lines) {
+                Element line = currentDocument.getDefaultRootElement().getElement(startLineIndex);
+                if (line != null) {
+                    //remove
+                    currentDocument.remove(line.getStartOffset(), line.getEndOffset() - line.getStartOffset());
+                }
+                //add
+                currentDocument.insertString(line.getEndOffset(), text, null);
+                startLineIndex++;
+            }
+            shouldIgnoreUpdates = false;
+        }
+    }
+    
+    public synchronized void deleteText(String fileName, int startPosition, int deleteCount) throws BadLocationException {
+        if (fileName.equals(currentFileName)) {
+            shouldIgnoreUpdates = true;
+            currentDocument.remove(startPosition, deleteCount);
+            shouldIgnoreUpdates = false;
+        }
+    }
+    
+    public synchronized void deleteLines(String[] lines, String fileName, int startLineIndex, int deleteCount) throws BadLocationException {
+        if (fileName.equals(currentFileName)) {
+            shouldIgnoreUpdates = true;
+            int lineNumber = startLineIndex;
+            Element currentLine;
+            //remove lines
+            for (int i = 0; i < deleteCount; i++) {
+                currentLine = currentDocument.getDefaultRootElement().getElement(lineNumber);
+                currentDocument.remove(currentLine.getStartOffset(), currentLine.getEndOffset());
+                lineNumber++;
+            }
+            //add lines
+            for (String line : lines) {
+                currentLine = currentDocument.getDefaultRootElement().getElement(startLineIndex);
+                currentDocument.insertString(currentLine.getEndOffset(), line, null);
+                startLineIndex++;
+            }
+            shouldIgnoreUpdates = false;
+        }
     }
 }
