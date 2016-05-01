@@ -35,14 +35,11 @@ public class RegisterMessage implements Message {
         
         // Handle the messsage 
         if(status.equals("failed")){
-            controller.setLoginState(false);
             NotifyDescriptor nd = new NotifyDescriptor.Message(reason, NotifyDescriptor.ERROR_MESSAGE);
             DialogDisplayer.getDefault().notify(nd);
         }
         else{
-            controller.setLoginState(true);
-            controller.logIn();
-            NotifyDescriptor nd = new NotifyDescriptor.Message("Thanks for signing up!", NotifyDescriptor.INFORMATION_MESSAGE);
+            NotifyDescriptor nd = new NotifyDescriptor.Message("Acount created!", NotifyDescriptor.INFORMATION_MESSAGE);
             DialogDisplayer.getDefault().notify(nd);
         }
     }

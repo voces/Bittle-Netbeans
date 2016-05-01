@@ -1,17 +1,16 @@
 package org.bittle.utilities;
 
+import com.eclipsesource.json.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.Element;
 import javax.swing.text.JTextComponent;
-import org.bittle.beansmod.Share;
-import org.json.simple.JSONArray;
+import org.bittle.beansmod.*;
 import org.netbeans.api.editor.EditorRegistry;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -79,8 +78,8 @@ public class DocumentManipulator {
                                         if (startingLineNumber != endingLineNumber) {
                                             //multi-line insert, split lines and send as JSON array of strings
                                             String[] lines = addedText.split("\\r?\\n");
-                                            String JSONlines = JSONArray.toJSONString(Arrays.asList(lines));
-                                            connection.lines(currentFileName, e.getOffset(), 0, JSONlines);
+                                            //String JSONlines = JSONArray.toJSONString(Arrays.asList(lines));
+                                            connection.lines(currentFileName, e.getOffset(), 0, Json.array(lines));
                                         } else {
                                             //single-line insert
                                             connection.line(currentFileName, startingLineNumber, e.getOffset(), 0, addedText);
@@ -102,7 +101,7 @@ public class DocumentManipulator {
                                             try {
                                                 currentLineText = currentDocument.getText(currentLine.getStartOffset(), currentLine.getEndOffset() - currentLine.getStartOffset());
                                                 currentLineText = currentLineText.replace("\n", ""); //strip the newline
-                                                connection.lines(currentFileName, e.getOffset(), e.getLength(), "[\"" + currentLineText + "\"]");
+                                                connection.lines(currentFileName, e.getOffset(), e.getLength(), Json.array(currentLineText));
                                             } catch (BadLocationException ex) {
                                                 Exceptions.printStackTrace(ex);
                                             }

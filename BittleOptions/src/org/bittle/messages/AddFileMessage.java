@@ -34,7 +34,7 @@ public class AddFileMessage implements Message {
     public void handleMessage() {
         
         // Ignore files added by self 
-        if(!blame.equals(Share.getInstance().getMe())){
+        if(blame != null && !blame.equals(Share.getInstance().getMe())){
             if(!Share.getInstance().files.contains(filename))
                 Connection.getInstance().get(filename);
             

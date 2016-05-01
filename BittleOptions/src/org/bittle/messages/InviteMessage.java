@@ -7,7 +7,6 @@ package org.bittle.messages;
 
 import org.bittle.utilities.Connection;
 import com.eclipsesource.json.*;
-import org.bittle.beansmod.*;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 

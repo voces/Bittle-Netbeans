@@ -45,8 +45,9 @@ public class TreePopup extends JPopupMenu{
             Object result = DialogDisplayer.getDefault().notify(shareMessage);
             if(result == NotifyDescriptor.OK_OPTION){
                 String userName = shareMessage.getInputText();
-                NotifyDescriptor nd = new NotifyDescriptor.Message("Sending invitation to: " + userName, NotifyDescriptor.INFORMATION_MESSAGE);
-                DialogDisplayer.getDefault().notify(nd);
+                
+                //NotifyDescriptor nd = new NotifyDescriptor.Message("Sending invitation to: " + userName, NotifyDescriptor.INFORMATION_MESSAGE);
+                //DialogDisplayer.getDefault().notify(nd);
                 
                 connection.invite(userName);
             }

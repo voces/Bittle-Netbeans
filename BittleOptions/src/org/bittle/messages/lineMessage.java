@@ -6,8 +6,6 @@
 package org.bittle.messages;
 
 import com.eclipsesource.json.*;
-import java.util.ArrayList;
-import java.util.List;
 import org.bittle.beansmod.*;
 import org.bittle.utilities.DocumentManipulator;
 
@@ -38,7 +36,7 @@ public class lineMessage implements Message {
    
     @Override
     public void handleMessage() {
-        if(!blame.equals(Share.getInstance().getMe())){
+        if(blame != null && !blame.equals(Share.getInstance().getMe())){
             if (deleteCount > 0)
                 DocumentManipulator.getInstance().deleteText(filename, start, deleteCount);
             else

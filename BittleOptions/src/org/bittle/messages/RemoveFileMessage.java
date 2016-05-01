@@ -5,7 +5,6 @@ import java.io.IOException;
 import org.bittle.beansmod.Share;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
-import org.openide.util.Exceptions;
 
 /**
  * Remove File Message
@@ -27,7 +26,7 @@ public class RemoveFileMessage implements Message {
     public void handleMessage() {
         
         // Ignore files removed by self
-        if(!blame.equals(Share.getInstance().getMe())){
+        if(blame != null && !blame.equals(Share.getInstance().getMe())){
             try {
                 Share.getInstance().removeFile(filename);
             } catch (IOException ex) {

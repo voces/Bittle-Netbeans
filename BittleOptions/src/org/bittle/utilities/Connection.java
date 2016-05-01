@@ -99,6 +99,7 @@ public class Connection {
                 message = new AddFileMessage(jsonMessage);
                 break;
             case "removeClient":
+                // TODO
                 message = null;
                 break;
             case "removeFile":
@@ -254,12 +255,14 @@ public class Connection {
     }
     
     //update: 4/23/16
-    public void lines(String filename, int start, int deleteCount, String lines) {
-        sendMessage("{\"id\":\"lines\", \"filename\":\"" + filename + "\", \"start\":" + start + ", \"deleteCount\":" + deleteCount + ", \"lines\": " + lines + "}");
+    public void lines(String filename, int start, int deleteCount, JsonArray lines) {
+        sendMessage(Json.object().add("id", "lines").add("filename", filename).add("start", start).add("deleteCount", deleteCount).add("lines", lines).toString());
+        //sendMessage("{\"id\":\"lines\", \"filename\":\"" + filename + "\", \"start\":" + start + ", \"deleteCount\":" + deleteCount + ", \"lines\": " + lines + "}");
     }
     
     public void line(String filename, int lineIndex, int start, int deleteCount, String line) {
-        sendMessage("{\"id\":\"line\", \"filename\":\"" + filename + "\", \"lineIndex\":" + lineIndex + ", \"start\":" + start + ", \"deleteCount\": " + deleteCount +  ", \"line\":\"" + line + "\"}");
+        sendMessage(Json.object().add("id", "line").add("filename", filename).add("lineIndex", lineIndex).add("start", start).add("deleteCount", deleteCount).add("line", line).toString());
+        //sendMessage("{\"id\":\"line\", \"filename\":\"" + filename + "\", \"lineIndex\":" + lineIndex + ", \"start\":" + start + ", \"deleteCount\": " + deleteCount +  ", \"line\":\"" + line + "\"}");
     }
     
     //update: 4/27/16

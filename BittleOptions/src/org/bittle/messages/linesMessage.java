@@ -38,7 +38,7 @@ public class linesMessage implements Message {
     public void handleMessage() {
 
         // Make sure you didn't cause the change         
-        if(!blame.equals(Share.getInstance().getMe())){
+        if(blame != null && !blame.equals(Share.getInstance().getMe())){
             
             // Create an array of strings
             String[] lines;

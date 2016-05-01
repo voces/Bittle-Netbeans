@@ -17,14 +17,14 @@ public class getMessage implements Message {
     
     private JsonObject message;
     private String id;
-    private String file;
+    private String filename;
     private String status;
     private JsonArray lines;
     
     public getMessage(JsonObject message){
         this.message = message;
         this.id = message.getString("id", null);
-        this.file = message.getString("filename", null);
+        this.filename = message.getString("filename", null);
         this.status = message.getString("status", null);
         this.lines = message.get("lines").asArray();
     }
@@ -33,7 +33,7 @@ public class getMessage implements Message {
     @Override
     public void handleMessage() {
         try {
-            Share.getInstance().addFileFromServer(file, lines);
+            Share.getInstance().addFileFromServer(filename, lines);
         } catch (IOException ex) {
         }
     }

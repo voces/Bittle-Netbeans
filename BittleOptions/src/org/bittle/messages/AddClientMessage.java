@@ -41,11 +41,11 @@ public class AddClientMessage implements Message {
     public void handleMessage() {
         if(name != null){
             if(!blame.equals(Share.getInstance().getMe())){
-                NotifyDescriptor nd = new NotifyDescriptor.Message(
-                        blame + " added " + name + "to the share session", 
-                        NotifyDescriptor.INFORMATION_MESSAGE
-                );
-                DialogDisplayer.getDefault().notify(nd);
+            NotifyDescriptor nd = new NotifyDescriptor.Message(
+                    blame + " added " + name + "to the share session", 
+                    NotifyDescriptor.INFORMATION_MESSAGE
+            );
+            DialogDisplayer.getDefault().notify(nd);
             }
         }
         else{
