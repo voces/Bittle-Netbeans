@@ -1,5 +1,6 @@
 package org.bittle.beansmod;
 
+import org.bittle.utilities.Connection;
 import com.eclipsesource.json.*;
 import java.io.File;
 import java.io.IOException;

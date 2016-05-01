@@ -370,7 +370,7 @@ public final class BittleTreeTopComponent extends TopComponent {
      * Reloads the tree
      */
     public void clearFiles() throws IOException{
-        //rootNode.removeAllChildren();
+        rootNode.removeAllChildren();
         Share.getInstance().purgeFiles();
         treeModel.reload();
     }
