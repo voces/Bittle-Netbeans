@@ -38,9 +38,11 @@ public class InviteMessage implements Message{
 
     @Override
     public void handleMessage() {
-        if(status.equals("failed")){
-            NotifyDescriptor nd = new NotifyDescriptor.Message(reason, NotifyDescriptor.ERROR_MESSAGE);
-            DialogDisplayer.getDefault().notify(nd);
+        if(status != null){
+            if(reason != null){
+                NotifyDescriptor nd = new NotifyDescriptor.Message(reason, NotifyDescriptor.ERROR_MESSAGE);
+                DialogDisplayer.getDefault().notify(nd);
+            }
         }
         else{
             // Get the user that invited the client 

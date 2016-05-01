@@ -100,6 +100,7 @@ public final class BittleTreeTopComponent extends TopComponent {
         jScrollPane1 = new javax.swing.JScrollPane();
         fileTree = new javax.swing.JTree();
         RemoveAllButton = new javax.swing.JButton();
+        OptionsButton = new javax.swing.JButton();
         NotLoggedInScreen = new javax.swing.JPanel();
         FlipGuy = new javax.swing.JLabel();
         NotLoggedInMessage = new javax.swing.JLabel();
@@ -131,6 +132,13 @@ public final class BittleTreeTopComponent extends TopComponent {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(OptionsButton, org.openide.util.NbBundle.getMessage(BittleTreeTopComponent.class, "BittleTreeTopComponent.OptionsButton.text")); // NOI18N
+        OptionsButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                OptionsButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout LoggedInScreenLayout = new javax.swing.GroupLayout(LoggedInScreen);
         LoggedInScreen.setLayout(LoggedInScreenLayout);
         LoggedInScreenLayout.setHorizontalGroup(
@@ -139,12 +147,13 @@ public final class BittleTreeTopComponent extends TopComponent {
                 .addContainerGap()
                 .addGroup(LoggedInScreenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(LoggedInScreenLayout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(addButton)
-                        .addGap(18, 18, 18)
+                        .addGap(18, 18, Short.MAX_VALUE)
                         .addComponent(RemoveAllButton)
+                        .addGap(18, 18, Short.MAX_VALUE)
+                        .addComponent(OptionsButton)
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 276, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1))
                 .addContainerGap())
         );
         LoggedInScreenLayout.setVerticalGroup(
@@ -155,7 +164,8 @@ public final class BittleTreeTopComponent extends TopComponent {
                 .addGap(18, 18, 18)
                 .addGroup(LoggedInScreenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(addButton)
-                    .addComponent(RemoveAllButton))
+                    .addComponent(RemoveAllButton)
+                    .addComponent(OptionsButton))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -302,12 +312,17 @@ public final class BittleTreeTopComponent extends TopComponent {
         }
 
     }//GEN-LAST:event_RemoveAllButtonActionPerformed
+
+    private void OptionsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_OptionsButtonActionPerformed
+        OptionsDisplayer.getDefault().open("BittleOptions");
+    }//GEN-LAST:event_OptionsButtonActionPerformed
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel FlipGuy;
     private javax.swing.JPanel LoggedInScreen;
     private javax.swing.JLabel NotLoggedInMessage;
     private javax.swing.JPanel NotLoggedInScreen;
+    private javax.swing.JButton OptionsButton;
     private javax.swing.JButton RemoveAllButton;
     private javax.swing.JButton ToOptionsButton;
     private javax.swing.JButton addButton;
@@ -355,9 +370,13 @@ public final class BittleTreeTopComponent extends TopComponent {
      * Reloads the tree
      */
     public void clearFiles() throws IOException{
-        rootNode.removeAllChildren();
+        //rootNode.removeAllChildren();
         Share.getInstance().purgeFiles();
         treeModel.reload();
+    }
+    
+    public DefaultTreeModel getTreeModel(){
+        return treeModel;
     }
     
     /**

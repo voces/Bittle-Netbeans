@@ -32,6 +32,7 @@ final class BittlePanel extends javax.swing.JPanel {
         this.controller = controller;
         this.fileTree = (BittleTreeTopComponent) WindowManager.getDefault().findTopComponent("BittleTree");
         this.connection = Connection.getInstance();
+        connection.connect(serverName);
         this.share = Share.getInstance();
         
         // Store default preferences
@@ -59,10 +60,16 @@ final class BittlePanel extends javax.swing.JPanel {
         LoginLabel = new javax.swing.JLabel();
         UsernameLabel = new javax.swing.JLabel();
         PasswordLabel = new javax.swing.JLabel();
-        UsernameField = new javax.swing.JTextField();
-        PasswordField = new javax.swing.JPasswordField();
+        LoginUserField = new javax.swing.JTextField();
+        LoginPassField = new javax.swing.JPasswordField();
         LoginButton = new javax.swing.JButton();
-        RegisterCheckbox = new javax.swing.JCheckBox();
+        jSeparator2 = new javax.swing.JSeparator();
+        RegisterLabel = new javax.swing.JLabel();
+        UsernameLabel1 = new javax.swing.JLabel();
+        PasswordLabel1 = new javax.swing.JLabel();
+        SignupUserField = new javax.swing.JTextField();
+        SignupPassField = new javax.swing.JPasswordField();
+        RegisterButton = new javax.swing.JButton();
         LoggedInPanel = new javax.swing.JPanel();
         LoggedInLabel = new javax.swing.JLabel();
         jSeparator1 = new javax.swing.JSeparator();
@@ -91,11 +98,11 @@ final class BittlePanel extends javax.swing.JPanel {
         PasswordLabel.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(PasswordLabel, org.openide.util.NbBundle.getMessage(BittlePanel.class, "BittlePanel.PasswordLabel.text")); // NOI18N
 
-        UsernameField.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
-        UsernameField.setText(org.openide.util.NbBundle.getMessage(BittlePanel.class, "BittlePanel.UsernameField.text")); // NOI18N
+        LoginUserField.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
+        LoginUserField.setText(org.openide.util.NbBundle.getMessage(BittlePanel.class, "BittlePanel.LoginUserField.text")); // NOI18N
 
-        PasswordField.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
-        PasswordField.setText(org.openide.util.NbBundle.getMessage(BittlePanel.class, "BittlePanel.PasswordField.text")); // NOI18N
+        LoginPassField.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
+        LoginPassField.setText(org.openide.util.NbBundle.getMessage(BittlePanel.class, "BittlePanel.LoginPassField.text")); // NOI18N
 
         LoginButton.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(LoginButton, org.openide.util.NbBundle.getMessage(BittlePanel.class, "BittlePanel.LoginButton.text")); // NOI18N
@@ -105,11 +112,29 @@ final class BittlePanel extends javax.swing.JPanel {
             }
         });
 
-        RegisterCheckbox.setFont(new java.awt.Font("Dialog", 0, 14)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(RegisterCheckbox, org.openide.util.NbBundle.getMessage(BittlePanel.class, "BittlePanel.RegisterCheckbox.text")); // NOI18N
-        RegisterCheckbox.addActionListener(new java.awt.event.ActionListener() {
+        jSeparator2.setOrientation(javax.swing.SwingConstants.VERTICAL);
+
+        RegisterLabel.setFont(new java.awt.Font("Dialog", 1, 48)); // NOI18N
+        RegisterLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        org.openide.awt.Mnemonics.setLocalizedText(RegisterLabel, org.openide.util.NbBundle.getMessage(BittlePanel.class, "BittlePanel.RegisterLabel.text")); // NOI18N
+
+        UsernameLabel1.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(UsernameLabel1, org.openide.util.NbBundle.getMessage(BittlePanel.class, "BittlePanel.UsernameLabel1.text")); // NOI18N
+
+        PasswordLabel1.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(PasswordLabel1, org.openide.util.NbBundle.getMessage(BittlePanel.class, "BittlePanel.PasswordLabel1.text")); // NOI18N
+
+        SignupUserField.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
+        SignupUserField.setText(org.openide.util.NbBundle.getMessage(BittlePanel.class, "BittlePanel.SignupUserField.text")); // NOI18N
+
+        SignupPassField.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
+        SignupPassField.setText(org.openide.util.NbBundle.getMessage(BittlePanel.class, "BittlePanel.SignupPassField.text")); // NOI18N
+
+        RegisterButton.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(RegisterButton, org.openide.util.NbBundle.getMessage(BittlePanel.class, "BittlePanel.RegisterButton.text")); // NOI18N
+        RegisterButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                RegisterCheckboxActionPerformed(evt);
+                RegisterButtonActionPerformed(evt);
             }
         });
 
@@ -118,41 +143,68 @@ final class BittlePanel extends javax.swing.JPanel {
         LogInPanelLayout.setHorizontalGroup(
             LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(LogInPanelLayout.createSequentialGroup()
-                .addGap(60, 60, 60)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(LoginLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 287, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(UsernameLabel)
+                    .addComponent(PasswordLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(LoginPassField, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(LoginUserField, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(LoginButton)
+                    .addComponent(LoginLabel))
+                .addGap(18, 18, Short.MAX_VALUE)
+                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(LogInPanelLayout.createSequentialGroup()
+                        .addGap(18, 18, 18)
                         .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(UsernameLabel)
-                            .addComponent(PasswordLabel))
+                            .addComponent(UsernameLabel1)
+                            .addComponent(PasswordLabel1))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(PasswordField, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(UsernameField, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(LoginButton)))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, LogInPanelLayout.createSequentialGroup()
-                        .addComponent(RegisterCheckbox)
-                        .addGap(112, 112, 112)))
-                .addContainerGap(61, Short.MAX_VALUE))
+                        .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(SignupUserField, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(SignupPassField, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(RegisterButton)))
+                    .addGroup(LogInPanelLayout.createSequentialGroup()
+                        .addGap(66, 66, 66)
+                        .addComponent(RegisterLabel)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         LogInPanelLayout.setVerticalGroup(
             LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(LogInPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(LoginLabel)
-                .addGap(18, 18, 18)
-                .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(UsernameField, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(UsernameLabel))
-                .addGap(18, 18, 18)
-                .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(PasswordLabel)
-                    .addComponent(PasswordField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addComponent(LoginButton)
-                .addGap(18, 18, 18)
-                .addComponent(RegisterCheckbox)
-                .addContainerGap(109, Short.MAX_VALUE))
+                .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(LogInPanelLayout.createSequentialGroup()
+                        .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(LoginLabel)
+                            .addComponent(RegisterLabel))
+                        .addGap(18, 18, 18)
+                        .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(LogInPanelLayout.createSequentialGroup()
+                                .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(UsernameLabel)
+                                    .addComponent(LoginUserField, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(18, 18, 18)
+                                .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(PasswordLabel)
+                                    .addComponent(LoginPassField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addGroup(LogInPanelLayout.createSequentialGroup()
+                                .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(UsernameLabel1)
+                                    .addComponent(SignupUserField, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(18, 18, 18)
+                                .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(PasswordLabel1)
+                                    .addComponent(SignupPassField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(LoginButton)
+                            .addComponent(RegisterButton))
+                        .addGap(0, 10, Short.MAX_VALUE))
+                    .addComponent(jSeparator2))
+                .addContainerGap())
         );
 
         LoggedInPanel.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
@@ -388,90 +440,6 @@ final class BittlePanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_BrowseButtonActionPerformed
 
-    private void RegisterCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RegisterCheckboxActionPerformed
-        
-        // If the checkbox is selected, show the register prompts
-        if(RegisterCheckbox.isSelected()){
-            LoginLabel.setText("Sign Up");
-            LoginButton.setText("Sign Up");
-        }
-        // Otherwise show the log in prompts
-        else{
-            LoginLabel.setText("Log In");
-            LoginButton.setText("Log In");
-        }
-    }//GEN-LAST:event_RegisterCheckboxActionPerformed
-
-    private void LoginButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LoginButtonActionPerformed
-        
-        // Do clilent side log in validation
-        // If log in was invalid, do nothing
-        if(!validLogin())
-            return;      
-        
-        // Connect to the server 
-        connection.connect(serverName);
-        
-        // Update the username and password with the input
-        username = UsernameField.getText();
-        password = PasswordField.getText();
-        
-        // Set up the wait flag
-        waitingForResponse = true;
-        
-        // If the user wants to register, do that
-        if(RegisterCheckbox.isSelected())
-            connection.register(username, password);
-        // Otherwise try to log in
-        else
-            connection.login(username, password);
-        
-        // If the server didn't respond
-        // Notify the time out and do nothing 
-        if(!waitForResponse()){
-            NotifyDescriptor nd = new NotifyDescriptor.Message("Waiting for server timed out...", NotifyDescriptor.ERROR_MESSAGE);
-            DialogDisplayer.getDefault().notify(nd);
-            return;
-        }
-        
-        // Wait for the message handler to set log in status
-        // Ugly but won't work without it :(
-        try {
-            TimeUnit.MILLISECONDS.sleep(150);
-        } catch (InterruptedException ex) {
-        }
-        
-        // If the log in/register failed, back out 
-        if(!loggedIn)
-            return;        
-        
-        // Try to create the bittle directory
-        // If it already exists, rootpath will be updated
-        // NOTE: We need to find a way to store each user's preference for this
-        // - As it is now, the bittle folder is created in user's home folder
-        // - They have to reset it to thier desired path each time
-        // - Perhaps we could store their desired path in the server
-        // - We would use that instead of "rootpath" for the create call
-        try {
-            createBittleDirectory(rootpath, false);
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-        
-        // Add the current user to the share
-        share.addMe(username);
-        
-        // Store all the new information 
-        store();
-        
-        // Show the appropriate screens and text 
-        load();
-        LogInPanel.setVisible(false);
-        LoggedInLabel.setText("Hey There, " + username);
-        LoggedInPanel.setVisible(true);
-        fileTree.updateTree();
-    }//GEN-LAST:event_LoginButtonActionPerformed
-
     private void LogOutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LogOutButtonActionPerformed
 
         // Log out from the server and initialize state
@@ -502,6 +470,92 @@ final class BittlePanel extends javax.swing.JPanel {
             DialogDisplayer.getDefault().notify(nd);
         }
     }//GEN-LAST:event_ChangePassButtonActionPerformed
+
+    private void LoginButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LoginButtonActionPerformed
+
+        // Do clilent side log in validation
+        // If log in was invalid, do nothing
+        if(!validLogin())
+            return;
+
+        // Update the username and password with the input
+        username = LoginUserField.getText();
+        password = LoginPassField.getText();
+
+        // Set up the wait flag
+        waitingForResponse = true;
+
+        connection.login(username, password);
+
+        // If the server didn't respond
+        // Notify the time out and do nothing
+        if(!waitForResponse()){
+            NotifyDescriptor nd = new NotifyDescriptor.Message("Waiting for server timed out...", NotifyDescriptor.ERROR_MESSAGE);
+            DialogDisplayer.getDefault().notify(nd);
+            return;
+        }
+
+        // Wait for the message handler to set log in status
+        // Ugly but won't work without it :(
+        try {
+            TimeUnit.MILLISECONDS.sleep(150);
+        } catch (InterruptedException ex) {
+        }
+        
+        // If the log in failed, back out
+        if(!loggedIn)
+            return;
+        
+        // Try to create the bittle directory
+            // If it already exists, rootpath will be updated
+            // NOTE: We need to find a way to store each user's preference for this
+            // - As it is now, the bittle folder is created in user's home folder
+            // - They have to reset it to thier desired path each time
+            // - Perhaps we could store their desired path in the server
+            // - We would use that instead of "rootpath" for the create call
+            try {
+                createBittleDirectory(rootpath, false);
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+
+            // Add the current user to the share
+            share.addMe(username);
+
+            // Store all the new information
+            store();
+
+            // Show the appropriate screens and text
+            load();
+            LogInPanel.setVisible(false);
+            LoggedInLabel.setText("Hey There, " + username);
+            LoggedInPanel.setVisible(true);
+            fileTree.updateTree();
+    }//GEN-LAST:event_LoginButtonActionPerformed
+
+    private void RegisterButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RegisterButtonActionPerformed
+                
+        // Do clilent side field validation
+        // If fields were invalid, do nothing
+        if(!validSignup())
+            return;
+        
+        String newUser = SignupUserField.getText();
+        String newPass = SignupPassField.getText();
+        
+        waitingForResponse = true;
+        
+        connection.register(newUser, newPass);
+        
+        // If the server didn't respond
+        // Notify the time out and do nothing
+        if(!waitForResponse()){
+            NotifyDescriptor nd = new NotifyDescriptor.Message("Waiting for server timed out...", NotifyDescriptor.ERROR_MESSAGE);
+            DialogDisplayer.getDefault().notify(nd);
+        }
+        
+        
+    }//GEN-LAST:event_RegisterButtonActionPerformed
     
     /**
      * A helper method to let the register message handler log in after registering 
@@ -545,8 +599,8 @@ final class BittlePanel extends javax.swing.JPanel {
      * Loads GUI labels with most up to date preferences 
      */
     void load() {
-        UsernameField.setText(NbPreferences.forModule(BittlePanel.class).get("username", ""));
-        PasswordField.setText(NbPreferences.forModule(BittlePanel.class).get("password", ""));
+        LoginUserField.setText(NbPreferences.forModule(BittlePanel.class).get("username", ""));
+        LoginPassField.setText(NbPreferences.forModule(BittlePanel.class).get("password", ""));
         CurrentDirectoryField.setText(NbPreferences.forModule(BittlePanel.class).get("path", ""));
     }
 
@@ -583,15 +637,21 @@ final class BittlePanel extends javax.swing.JPanel {
     private javax.swing.JPanel LoggedInPanel;
     private javax.swing.JButton LoginButton;
     private javax.swing.JLabel LoginLabel;
+    private javax.swing.JPasswordField LoginPassField;
+    private javax.swing.JTextField LoginUserField;
     private javax.swing.JLabel NewPassLabel;
     private javax.swing.JLayeredPane OptionsLayeredPane;
-    private javax.swing.JPasswordField PasswordField;
     private javax.swing.JLabel PasswordLabel;
-    private javax.swing.JCheckBox RegisterCheckbox;
-    private javax.swing.JTextField UsernameField;
+    private javax.swing.JLabel PasswordLabel1;
+    private javax.swing.JButton RegisterButton;
+    private javax.swing.JLabel RegisterLabel;
+    private javax.swing.JPasswordField SignupPassField;
+    private javax.swing.JTextField SignupUserField;
     private javax.swing.JLabel UsernameLabel;
+    private javax.swing.JLabel UsernameLabel1;
     private javax.swing.JPasswordField currPassField;
     private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JSeparator jSeparator2;
     private javax.swing.JPasswordField newPassField;
     // End of variables declaration//GEN-END:variables
 
@@ -601,7 +661,21 @@ final class BittlePanel extends javax.swing.JPanel {
      * @return false if the user's input was blank, true otherwise
      */
     private boolean validLogin() {
-        if("".equals(PasswordField.getText()) || "".equals(UsernameField.getText())){
+        if("".equals(LoginPassField.getText()) || "".equals(LoginUserField.getText())){
+            NotifyDescriptor nd = new NotifyDescriptor.Message("Fields cannot be blank!", NotifyDescriptor.ERROR_MESSAGE);
+            DialogDisplayer.getDefault().notify(nd);
+            return false;
+        }
+        return true;
+    }
+    
+    /**
+     * Checks that the user's input is not blank
+     * Should probably do more than just check that
+     * @return false if the user's input was blank, true otherwise
+     */
+    private boolean validSignup() {
+        if("".equals(SignupPassField.getText()) || "".equals(SignupUserField.getText())){
             NotifyDescriptor nd = new NotifyDescriptor.Message("Fields cannot be blank!", NotifyDescriptor.ERROR_MESSAGE);
             DialogDisplayer.getDefault().notify(nd);
             return false;

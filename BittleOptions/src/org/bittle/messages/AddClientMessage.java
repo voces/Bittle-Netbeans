@@ -21,8 +21,8 @@ import org.openide.NotifyDescriptor;
 public class AddClientMessage implements Message {
     
     private JsonObject message;    // JSON message from the server 
-    private JsonArray names;       // List of users in the new share
-    private JsonArray files;       // List of files in the new share 
+    private JsonValue names;       // List of users in the new share
+    private JsonValue files;       // List of files in the new share 
     private String id;             // Message ID
     private String blame;          // Client who added the new user
     private String name;           // Name of the new user 
@@ -33,22 +33,26 @@ public class AddClientMessage implements Message {
         this.id = message.getString("id", null);
         this.blame = message.getString("blame", null);
         this.name = message.getString("name", null);
-        this.names = message.get("names").asArray();
-        this.files = message.get("files").asArray();   
+        this.names = message.get("names");
+        this.files = message.get("files"); 
     }
 
     @Override
     public void handleMessage() {
         if(name != null){
-            NotifyDescriptor nd = new NotifyDescriptor.Message(
-                    blame + " added " + name + "to the share session", 
-                    NotifyDescriptor.INFORMATION_MESSAGE
-            );
-            DialogDisplayer.getDefault().notify(nd);
+            if(!blame.equals(Share.getInstance().getMe())){
+                NotifyDescriptor nd = new NotifyDescriptor.Message(
+                        blame + " added " + name + "to the share session", 
+                        NotifyDescriptor.INFORMATION_MESSAGE
+                );
+                DialogDisplayer.getDefault().notify(nd);
+            }
         }
         else{
             try {
-                Share.getInstance().makeNewShare(names, files);
+                JsonArray namesArray = names.asArray();
+                JsonArray filesArray = files.asArray();
+                Share.getInstance().makeNewShare(namesArray, filesArray);
             } catch (IOException ex) {
             }
         }

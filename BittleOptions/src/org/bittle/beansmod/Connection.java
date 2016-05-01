@@ -97,12 +97,21 @@ public class Connection {
             case "addFile":
                 message = new AddFileMessage(jsonMessage);
                 break;
+            case "removeClient":
+                message = null;
+                break;
+            case "removeFile":
+                message = new RemoveFileMessage(jsonMessage);
+                break;
             case "get":
                 message = new getMessage(jsonMessage);
+                break;
             case "lines":
                 message = new linesMessage(jsonMessage);
+                break;
             case "line":
                 message = new lineMessage(jsonMessage);
+                break;
                 // Look in File.js for both of these
                 // Don't know what to do for these yet 
                 // If these have a status field, then it has a reason instead of the line data 
@@ -258,6 +267,10 @@ public class Connection {
         JsonArray linesArray = Json.array(lines);
         file.add("lines", linesArray);
         sendMessage(file.toString());
+    }
+    
+    public void untrack(String filename){
+        sendMessage(Json.object().add("id", "untrack").add("filename", filename).toString());
     }
     
     public void invite(String username){

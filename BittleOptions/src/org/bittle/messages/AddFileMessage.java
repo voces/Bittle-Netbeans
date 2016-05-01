@@ -32,18 +32,16 @@ public class AddFileMessage implements Message {
     @Override
     public void handleMessage() {
         
-        // Get the user that added the file 
-        String changer = blame;
-        
         // Ignore files added by self 
-        if(!changer.equals(Share.getInstance().getMe())){
+        if(!blame.equals(Share.getInstance().getMe())){
+            if(!Share.getInstance().files.contains(filename))
+                Connection.getInstance().get(filename);
+            
             NotifyDescriptor nd = new NotifyDescriptor.Message(
                     blame + " has added " + filename + " to the share session", 
                     NotifyDescriptor.INFORMATION_MESSAGE
             );
             DialogDisplayer.getDefault().notify(nd);
-            if(!Share.getInstance().files.contains(filename))
-                Connection.getInstance().get(filename);
         }
     }
 }

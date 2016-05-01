@@ -108,12 +108,12 @@ public class Share {
      * @param filePath path of the new file to be added to the share 
      */
     public void addFile(String filePath) throws IOException{
-        String fileName = getFileName(filePath);
-        if(!files.contains(fileName)){
-            files.add(fileName);
+        String filename = getFileName(filePath);
+        if(!files.contains(filename)){
+            files.add(filename);
             copyToBittle(filePath);
-            fileTree.addObject(fileName);
-            trackFile(fileName);
+            fileTree.addObject(filename);
+            trackFile(filename);
         }
     }
     
@@ -144,9 +144,6 @@ public class Share {
             
             // Add file to gui tree 
             fileTree.addObject(filename);
-            
-            // Attempt to track the file
-            trackFile(filename);
         }
     }
     
@@ -157,20 +154,22 @@ public class Share {
      * stop tracking file. 
      * Note: This method does not remove the file from the tree
      * This should be handled after calling this function
-     * @param fileName name of the file to be removed
+     * @param filename name of the file to be removed
      */
-    public void removeFile(String fileName) throws IOException{
-        if(files.contains(fileName)){
+    public void removeFile(String filename) throws IOException{
+        if(files.contains(filename)){
             // Get the file object from the bittle directory 
-            FileObject fo = FileUtil.toFileObject(FileUtil.normalizeFile(new File(getBittleFilePath(fileName))));
+            FileObject fo = FileUtil.toFileObject(FileUtil.normalizeFile(new File(getBittleFilePath(filename))));
             
             // Do not attempt to delete a locked file 
             if(!fo.isLocked()){
-                Files.deleteIfExists(Paths.get(getBittleFilePath(fileName)));
-            files.remove(fileName);
+                Files.deleteIfExists(Paths.get(getBittleFilePath(filename)));
+                files.remove(filename);
+                connection.untrack(filename);
+                // Remove file from tree 
             }
             else{
-                NotifyDescriptor nd = new NotifyDescriptor.Message("Can not remove locked file " + fileName, NotifyDescriptor.ERROR_MESSAGE);
+                NotifyDescriptor nd = new NotifyDescriptor.Message("Can not remove locked file " + filename, NotifyDescriptor.ERROR_MESSAGE);
                 DialogDisplayer.getDefault().notify(nd);
             }
         }
@@ -183,11 +182,11 @@ public class Share {
     public void scanFolder(){
         String[] filesInBittleFolder = new File(bittlePath).list();
         Iterable<String> fileList = Arrays.asList(filesInBittleFolder);
-        for(String fileName : fileList){
-            if(!files.contains(fileName)){
-                files.add(fileName);
-                fileTree.addObject(fileName);
-                trackFile(fileName);
+        for(String filename : fileList){
+            if(!files.contains(filename)){
+                files.add(filename);
+                fileTree.addObject(filename);
+                trackFile(filename);
             }
         }
     }
@@ -232,13 +231,13 @@ public class Share {
     
     /**
      * If a file exists in the share, returns it's file path 
-     * @param fileName File name of the form file.txt
+     * @param filename File name of the form file.txt
      * @return File path of the form /folder/Bittle/file.txt,
      * null if given file name does not exist in the share.
      */
-    public String getBittleFilePath(String fileName){
-        if(files.contains(fileName))
-            return bittlePath + File.separator + fileName;
+    public String getBittleFilePath(String filename){
+        if(files.contains(filename))
+            return bittlePath + File.separator + filename;
         else
             return null;
     }
@@ -319,24 +318,26 @@ public class Share {
      * Converts the contents to an array of Strings
      * Sends the file name and array to the server
      * Handles the response from the server
-     * @param fileName 
+     * @param filename 
      */
-    private void trackFile(String fileName){
+    private void trackFile(String filename){
         
-        String filePath = getBittleFilePath(fileName);
+        String filePath = getBittleFilePath(filename);
         try {
             String[] lines = fileToStringArray(filePath);
-            connection.track(fileName, lines);
+            connection.track(filename, lines);
         } catch (IOException ex) {
         }   
     }
     
     /**
      * Clears all users from the share
-     * Deletes all files from the share and bittle folder 
+     * Deletes all files from the share and bittle folder
+     * Clears the file tree 
      */
     private void purgeShare() throws IOException {
         users.clear();
         fileTree.clearFiles();
+        purgeFiles();
     }
 }

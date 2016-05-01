@@ -24,7 +24,7 @@ public class getMessage implements Message {
     public getMessage(JsonObject message){
         this.message = message;
         this.id = message.getString("id", null);
-        this.file = message.getString("file", null);
+        this.file = message.getString("filename", null);
         this.status = message.getString("status", null);
         this.lines = message.get("lines").asArray();
     }
