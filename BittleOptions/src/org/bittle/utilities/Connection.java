@@ -259,7 +259,7 @@ public class Connection {
     }
     
     public void line(String filename, int lineIndex, int start, int deleteCount, String line) {
-        sendMessage("{\"id\":\"line\", \"filename\":\"" + filename + "\", \"lineIndex\":" + lineIndex + ", \"start\":" + start + ", \"deleteCount\": " + deleteCount +  ", \"line\":" + line + "}");
+        sendMessage("{\"id\":\"line\", \"filename\":\"" + filename + "\", \"lineIndex\":" + lineIndex + ", \"start\":" + start + ", \"deleteCount\": " + deleteCount +  ", \"line\":\"" + line + "\"}");
     }
     
     //update: 4/27/16
