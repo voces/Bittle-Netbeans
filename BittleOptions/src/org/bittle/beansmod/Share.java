@@ -1,18 +1,17 @@
 package org.bittle.beansmod;
 
+import com.eclipsesource.json.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.Preferences;
-import org.bittle.messages.*;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.filesystems.FileObject;
@@ -39,6 +38,7 @@ public class Share {
     private boolean waitingForResponse;
     private String bittlePath;
     private String owner;
+    private String me;
     
     public HashSet<String> users;
     public HashSet<String> files; 
@@ -60,22 +60,13 @@ public class Share {
         files = new HashSet<>();
         
         // Get the connection to the server
-        // Add a lister to it that is only interested in response messages
-        // If the share is waiting for a response, stop waiting and handle response
         connection = Connection.getInstance();
-        connection.addMessageListener((Message m) -> {
-            if(m instanceof Response){
-                if(waitingForResponse){
-                    waitingForResponse = false;
-                    handleResponse((Response) m);
-                }
-            }
-        });
        
        
         // Gets the preferences stored in the options
-        // If the rootpath preference changes, update the bittlePath
         preferences = NbPreferences.forModule(BittlePanel.class);
+        
+        // If the rootpath preference changes, update the bittlePath
         /*
         preferences.addPreferenceChangeListener((PreferenceChangeEvent evt) -> {
             if(evt.getKey().equals("path"))
@@ -91,14 +82,24 @@ public class Share {
     }
     
     /**
-     * Adds user to share if they are not already in it
-     * @param username User to be added to the share
+     * Adds user to the share
+     * Sets the user as the current user
+     * @param username Name of the current user 
      */
-    public void addUser(String username) {
-        if(!users.contains(username))
+    public void addMe(String username) {
+        if(!users.contains(username)){
             users.add(username);
+            me = username;
+        }
     }
     
+    /**
+     * @param rootpath The new bittle path 
+     */
+    public void setPath(String rootpath) {
+        bittlePath = rootpath;
+    }
+        
     /**
      * Expects a path of form "/folderA/folderB/file.txt"
      * Adds file to share if it is not already in it.
@@ -110,15 +111,43 @@ public class Share {
         String fileName = getFileName(filePath);
         if(!files.contains(fileName)){
             files.add(fileName);
-            addFileToFolder(filePath);
+            copyToBittle(filePath);
             fileTree.addObject(fileName);
             trackFile(fileName);
         }
     }
     
-    public void addFileFromServer(String fileName){
-        // TODO: Transform filename and array of lines into a file
-        // and add it to the share 
+    /**
+     * Called by get message handler
+     * If the file being added by the server is not in the share
+     * Constructs a file from the lines and adds it to the share
+     * @param filename Name of file being added to share
+     * @param jsonLines Contents of file being added to the share
+     */
+    public void addFileFromServer(String filename, JsonArray jsonLines) throws IOException{
+       
+        // Make sure the file is not already in the share
+        if(!files.contains(filename)){
+            
+            // Create an list of strings 
+            List<String> lines = new ArrayList<>();
+        
+            // Convert the json array to a list of strings 
+            for(JsonValue line : jsonLines)
+                lines.add(line.asString());
+            
+            // Construct the file and place it in the bittle folder 
+            constructFile(filename, lines);
+            
+            // Add file to list
+            files.add(filename);
+            
+            // Add file to gui tree 
+            fileTree.addObject(filename);
+            
+            // Attempt to track the file
+            trackFile(filename);
+        }
     }
     
     /**
@@ -166,11 +195,39 @@ public class Share {
     /**
      * Removes all the files from the share 
      */
-    public void clearList() throws IOException{
+    public void purgeFiles() throws IOException{
         Object[] fileArray = files.toArray();
         for(int i = 0; i < fileArray.length; i++){
             this.removeFile((String)fileArray[i]);
         }
+    }
+    
+    /**
+     * This function should purge the current share and make a new one with the new info
+     * Call get on all the files that are added, and add all the names to the user list
+     * @param names
+     * @param files 
+     */
+    public void makeNewShare(JsonArray names, JsonArray files) throws IOException {
+        
+        // Purge the old share
+        purgeShare();
+        
+        // Get the new users from the JSON
+        List<JsonValue> newUsers = names.values();
+        
+        // Add them to the share's user list 
+        for(JsonValue user : newUsers)
+            users.add(user.asString());
+        
+        // Get the new files from the JSON
+        List<JsonValue> newFiles = files.values();
+        
+        // Get the files from the server
+        // The server will respond with the filename and the array of lines
+        // The message handler will then add that response to the share 
+        for(JsonValue file : newFiles)
+            connection.get(file.asString());
     }
     
     /**
@@ -180,9 +237,8 @@ public class Share {
      * null if given file name does not exist in the share.
      */
     public String getBittleFilePath(String fileName){
-        if(files.contains(fileName)){
-            return bittlePath + "\\" + fileName;
-        }
+        if(files.contains(fileName))
+            return bittlePath + File.separator + fileName;
         else
             return null;
     }
@@ -191,7 +247,16 @@ public class Share {
      * @return Username of the current user 
      */
     public String getMe(){
-        return preferences.get("username", null);
+        return me;
+    }
+    
+    /**
+     * Adds user to share if they are not already in it
+     * @param username User to be added to the share
+     */
+    private void addUser(String username) {
+        if(!users.contains(username))
+            users.add(username);
     }
     
     /**
@@ -206,7 +271,7 @@ public class Share {
      * Copies the file at the given path to the Bittle directory
      * @param filePath path of the file to be copied
      */
-    private void addFileToFolder(String filePath) throws IOException {
+    private void copyToBittle(String filePath) throws IOException {
         Path from = Paths.get(filePath);
         Path to = Paths.get(getBittleFilePath(getFileName(filePath)));
         Files.copy(from, to);
@@ -232,22 +297,19 @@ public class Share {
     }
     
     /**
-     * Constructs a file from an array of Strings.
-     * If the file already exists, the array of Strings will be written to it.
-     * @param filename String - Name of the file to be created
-     * @param lines String[] - Array of lines to be written to the file
+     * Constructs a file from a list of Strings
+     * Places the file in the bittle folder 
+     * @param filename Name of the file to be created
+     * @param lines List of lines to be written to the file
      */
-    private void constructFile(String filename, String[] lines) throws IOException{
+    private void constructFile(String filename, List<String> lines) throws IOException{
        
         // Put the file in the current bittle directory
-        Path filePath = Paths.get(bittlePath + "\\" + filename);
-        
-        // Convert the array of Strings into an iterable list
-        Iterable<String> lineList = Arrays.asList(lines);
+        Path filePath = Paths.get(bittlePath + File.separator + filename);
         
         // Write the lines to the file
-        // The CREATE flag creates the file if it doesn't exist
-        Files.write(filePath, lineList, CREATE);
+        // The CREATE_NEW flag makes the write fail if the file already exists
+        Files.write(filePath, lines, CREATE_NEW);
     }
     
     /**
@@ -264,58 +326,17 @@ public class Share {
         String filePath = getBittleFilePath(fileName);
         try {
             String[] lines = fileToStringArray(filePath);
-            NotifyDescriptor nd = new NotifyDescriptor.Message("Attempting to track: " + fileName, NotifyDescriptor.INFORMATION_MESSAGE);
-            DialogDisplayer.getDefault().notify(nd);
-            
-            waitingForResponse = true;
             connection.track(fileName, lines);
-            waitForResponse();
         } catch (IOException ex) {
         }   
     }
-
-    /**
-     * Handles response events from the server 
-     * If the response is a failed response, gives the reason and returns 
-     * Otherwise notify the success response 
-     * @param r Response message from the server 
-     */
-    private void handleResponse(Response r) {
-        if(r.getStatus().equals("failed")){
-            NotifyDescriptor nd = new NotifyDescriptor.Message(r.getReason(), NotifyDescriptor.ERROR_MESSAGE);
-            DialogDisplayer.getDefault().notify(nd);
-        }
-        else{
-            NotifyDescriptor nd = new NotifyDescriptor.Message("Success!", NotifyDescriptor.INFORMATION_MESSAGE);
-            DialogDisplayer.getDefault().notify(nd);
-        }
-    }
     
     /**
-     * Waits by putting thread to sleep for 50ms
-     * Spins on response flag, which is changed in response handler
-     * If the thread has been spinning for too long, notify time out
+     * Clears all users from the share
+     * Deletes all files from the share and bittle folder 
      */
-    private void waitForResponse() {
-        int timer = 0;
-        
-        while(waitingForResponse){
-            if(timer > 100){
-                NotifyDescriptor nd = new NotifyDescriptor.Message("Waiting for server timed out...", NotifyDescriptor.ERROR_MESSAGE);
-                DialogDisplayer.getDefault().notify(nd);
-                break;
-            }
-            
-            try {
-                TimeUnit.MILLISECONDS.sleep(50);
-            } catch (InterruptedException ex) {
-            }
-            
-            timer ++;
-        }
-    }
-
-    void setPath(String rootpath) {
-        bittlePath = rootpath;
+    private void purgeShare() throws IOException {
+        users.clear();
+        fileTree.clearFiles();
     }
 }

@@ -2,9 +2,6 @@ package org.bittle.beansmod;
 
 import com.eclipsesource.json.*;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.Future;
 import org.bittle.messages.*;
 import org.eclipse.jetty.util.log.Log;
@@ -23,9 +20,6 @@ public class Connection {
  
     //singleton
     private static final Connection instance;
-    
-    // List of Message listeners 
-    private static final List<MessageListener> listeners = new ArrayList<>();
     
     static {
         instance = new Connection();
@@ -79,40 +73,48 @@ public class Connection {
         // Check the id of the message from the server 
         switch(id){
             case "register":
+                message = new RegisterMessage(jsonMessage);
+                break;
             case "login":
+                message = new LoginMessage(jsonMessage);
+                break;
             case "logout":
+                // Don't do anything with logout messages 
+                message = null;
+                break;
             case "track":
-            case "changePass":
-                // These messages will always be a response 
-                message = new Response(jsonMessage, id);
+                message = new TrackMessage(jsonMessage);
+                break;
+            case "changePass": 
+                message = new ChangePassMessage(jsonMessage);
                 break;
             case "invite":
-                // Invite messages will either be a response or an invitation
-                // Response messages have non null status field 
-                if(jsonMessage.getString("status", null) != null)
-                    message = new Response(jsonMessage, id);
-                else
-                    message = new Invitation(jsonMessage, id);
-                break;
-            case "addFile":
-                // Update the client when a new file is added to the share 
-                // May need to request the new file here
-                message = new Update(jsonMessage, id);
+                message = new InviteMessage(jsonMessage);
                 break;
             case "addClient":
-                // Always adding a new share session with this message
-                message = new shareSession(jsonMessage, id);
+                message = new AddClientMessage(jsonMessage);
                 break;
+            case "addFile":
+                message = new AddFileMessage(jsonMessage);
+                break;
+            case "get":
+                message = new getMessage(jsonMessage);
             case "lines":
+                message = new linesMessage(jsonMessage);
             case "line":
+                message = new lineMessage(jsonMessage);
+                // Look in File.js for both of these
                 // Don't know what to do for these yet 
+                // If these have a status field, then it has a reason instead of the line data 
             default:
                 message = null;
                 break;
         }
         
         // Send the message to all the listeners 
-        fireMessage(message);
+        if(message != null)
+            message.handleMessage();
+        //fireMessage(message);
         
         //on the message responding to an editor change, check awaitingServerResponseForEdit flag; true = don't update, false = update
         //not the best solution because this client won't get any editor updates until getting a response from the server?
@@ -273,32 +275,4 @@ public class Connection {
     public void get(String filename){
         sendMessage(Json.object().add("id", "get").add("filename", filename).toString());
     }
-
-    /**
-     * Adds a listener to the list 
-     * @param l Listener to be added 
-     */
-    public void addMessageListener(MessageListener l) {
-        listeners.add(l);
-    }
-    
-    /**
-     * Removes a listner from the list
-     * @param l Listen to be removed 
-     */
-    public void removeMessageListner(MessageListener l){
-        listeners.remove(l);
-    }
-
-    /**
-     * Sends a message to all listners
-     * @param m Message being sent to listeners 
-     */
-    private void fireMessage(Message m) {
-        Iterator listenerIterator = listeners.iterator();
-        while(listenerIterator.hasNext()){
-            ((MessageListener)listenerIterator.next()).messageRecieved(m);
-        }
-    }
-
 }

@@ -20,7 +20,7 @@ import org.openide.util.Lookup;
 public final class BittleOptionsPanelController extends OptionsPanelController {
 
     private static final BittleOptionsPanelController instance;
-    private BittlePanel panel;
+    private static BittlePanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
     
@@ -35,8 +35,20 @@ public final class BittleOptionsPanelController extends OptionsPanelController {
         return instance;
     }
     
+    public void logIn(){
+        getPanel().logIn();
+    }
+    
     public void logOut(){
-        getPanel().logout();
+        getPanel().logOut();
+    }
+    
+    public void stopWaiting(){
+        getPanel().stopWaiting();
+    }
+    
+    public void setLoginState(boolean state){
+        getPanel().setLoginState(state);
     }
 
     @Override
@@ -89,9 +101,8 @@ public final class BittleOptionsPanelController extends OptionsPanelController {
     }
     
     private BittlePanel getPanel() {
-        if (panel == null) {
-            panel = new BittlePanel(this);
-        }
+        if(panel == null)
+            panel = new BittlePanel(instance);
         return panel;
     }
 

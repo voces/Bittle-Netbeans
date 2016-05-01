@@ -7,7 +7,6 @@ package org.bittle.beansmod;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.Preferences;
 import javax.swing.JFileChooser;
 import javax.swing.JTree;
@@ -63,10 +62,10 @@ public final class BittleTreeTopComponent extends TopComponent {
         treePopup = new TreePopup(fileTree, treeModel);
         
         // Get the preferences of the options
-        // Listen for changes to "status" preference
-        // Update log in state on any changes 
         preferences = NbPreferences.forModule(BittlePanel.class);
         
+        // Listen for changes to "status" preference
+        // Update log in state on any changes 
         /*
         preferences.addPreferenceChangeListener((PreferenceChangeEvent evt) -> {
             if(evt.getKey().equals("status")){
@@ -355,9 +354,9 @@ public final class BittleTreeTopComponent extends TopComponent {
      * Clears all files from share session 
      * Reloads the tree
      */
-    private void clearFiles() throws IOException{
+    public void clearFiles() throws IOException{
         rootNode.removeAllChildren();
-        Share.getInstance().clearList();
+        Share.getInstance().purgeFiles();
         treeModel.reload();
     }
     

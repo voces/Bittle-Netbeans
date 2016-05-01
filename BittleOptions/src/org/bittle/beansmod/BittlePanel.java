@@ -1,12 +1,12 @@
 package org.bittle.beansmod;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import static java.nio.file.StandardCopyOption.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.concurrent.TimeUnit;
 import javax.swing.JFileChooser;
-import org.bittle.messages.*;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.Exceptions;
@@ -24,7 +24,7 @@ final class BittlePanel extends javax.swing.JPanel {
     
     private String username = "";
     private String password = "";
-    private String rootpath = System.getProperty("user.home") + "\\Bittle";
+    private String rootpath = System.getProperty("user.home") + File.separator + "bittle";
     private boolean loggedIn = false;
     private boolean waitingForResponse = false;
 
@@ -44,18 +44,6 @@ final class BittlePanel extends javax.swing.JPanel {
         LogInPanel.setVisible(true);
         LoggedInPanel.setVisible(false);
         //focusLoginButton();
-       
-        // Options panel message listner
-        // Only interested in Response messages
-        // If the component is waiting for a response from the server
-        // And it recieves a response message, it will handle it 
-        this.connection.addMessageListener((Message m) -> {
-            if(m instanceof Response){
-                if(waitingForResponse){
-                    handleResponse((Response) m);
-                }
-            }
-        });
     }
 
     /**
@@ -471,7 +459,7 @@ final class BittlePanel extends javax.swing.JPanel {
         }
         
         // Add the current user to the share
-        share.addUser(username);
+        share.addMe(username);
         
         // Store all the new information 
         store();
@@ -487,7 +475,7 @@ final class BittlePanel extends javax.swing.JPanel {
     private void LogOutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LogOutButtonActionPerformed
 
         // Log out from the server and initialize state
-        logout();
+        logOut();
         
         // Update the login screen and file tree
         LoggedInPanel.setVisible(false);
@@ -516,10 +504,19 @@ final class BittlePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_ChangePassButtonActionPerformed
     
     /**
+     * A helper method to let the register message handler log in after registering 
+     */
+    public void logIn(){
+        if(!loggedIn){
+            connection.login(username, password);
+        }
+    }
+    
+    /**
      * If the user is logged in
      * Logs out from the server and resets preferences 
      */
-    public void logout(){
+    public void logOut(){
         if(loggedIn){
             connection.logout();
             loggedIn = false;
@@ -527,6 +524,21 @@ final class BittlePanel extends javax.swing.JPanel {
             password = "";
             store();
         }
+    }
+    
+    /**
+     * Helper method to allow wake up from message handlers 
+     */
+    public void stopWaiting(){
+        waitingForResponse = false;
+    }
+    
+    /**
+     * Helper methods to allow message handlers to change log in state
+     * @param state The new log in state
+     */
+    public void setLoginState(boolean state){
+        loggedIn = state;
     }
     
     /**
@@ -604,10 +616,10 @@ final class BittlePanel extends javax.swing.JPanel {
      */
     private void createBittleDirectory(String newPath, boolean moveFiles) throws IOException{
         
-        // If the new folder is not a folder named "Bittle"
-        // Make the a "Bittle" folder in it 
-        if(!newPath.substring(newPath.lastIndexOf("\\")).equals("\\Bittle"))
-            newPath = newPath + "\\Bittle";
+        // If the new folder is not a folder named "bittle"
+        // Make the a "bittle" folder in it 
+        if(!Paths.get(newPath).getFileName().toString().equals("bittle"))
+            newPath = newPath + File.separator + "bittle";
         
         // Create a path for the new folder
         Path newFolder = Paths.get(newPath);
@@ -669,59 +681,6 @@ final class BittlePanel extends javax.swing.JPanel {
         LogInPanel.requestFocusInWindow();
         LoginButton.requestFocusInWindow();
     }*/
-
-    /**
-     * Handles response events from the server 
-     * If the response is a failed response, tells the user why and returns
-     * Otherwise perform the appropriate action depending on the response type 
-     * @param r Response message from the server 
-     */
-    private void handleResponse(Response r) {
-        
-        // Response has arrived, stop waiting 
-        waitingForResponse = false;
-        
-        // Notify any failures
-        if(r.getStatus().equals("failed")){
-            loggedIn = false;
-            NotifyDescriptor nd = new NotifyDescriptor.Message(r.getReason(), NotifyDescriptor.ERROR_MESSAGE);
-            DialogDisplayer.getDefault().notify(nd);
-            return;
-        }
-        
-        // If no failures, check what kind of success response is being given 
-        switch (r.getID()) {
-            
-            // Thank the user and log in  on register response 
-            // Set logged in flag to true 
-            case "register":
-                {
-                    loggedIn = true;
-                    NotifyDescriptor nd = new NotifyDescriptor.Message("Thanks for signing up, " + username, NotifyDescriptor.INFORMATION_MESSAGE);
-                    DialogDisplayer.getDefault().notify(nd);
-                    connection.login(username, password);
-                    break;
-                }
-            // Welcome the user back on log in response
-            // Set logged in flag to true 
-            case "login":
-                {
-                    loggedIn = true;
-                    NotifyDescriptor nd = new NotifyDescriptor.Message("Welcome Back, " + username, NotifyDescriptor.INFORMATION_MESSAGE);
-                    DialogDisplayer.getDefault().notify(nd);
-                    break;
-                }
-            // Notify success of password change response    
-            case "changePass":
-                {
-                    NotifyDescriptor nd = new NotifyDescriptor.Message("Password successfully changed!", NotifyDescriptor.INFORMATION_MESSAGE);
-                    DialogDisplayer.getDefault().notify(nd);
-                    break;
-                }
-            default:
-                break;
-        }
-    }
 
     /**
      * Waits by putting thread to sleep for 50ms
