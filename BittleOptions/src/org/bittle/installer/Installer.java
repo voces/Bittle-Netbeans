@@ -1,6 +1,7 @@
 package org.bittle.installer;
 
-import org.bittle.beansmod.Connection;
+import org.bittle.utilities.Connection;
+import org.bittle.utilities.Connection;
 
 public class Installer extends org.openide.modules.ModuleInstall {
 

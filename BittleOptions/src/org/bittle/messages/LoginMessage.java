@@ -2,6 +2,7 @@ package org.bittle.messages;
 
 import com.eclipsesource.json.*;
 import org.bittle.beansmod.*;
+import org.bittle.utilities.DocumentManipulator;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 
@@ -43,6 +44,7 @@ public class LoginMessage implements Message {
             controller.setLoginState(true);
             NotifyDescriptor nd = new NotifyDescriptor.Message("Welcome Back!", NotifyDescriptor.INFORMATION_MESSAGE);
             DialogDisplayer.getDefault().notify(nd);
+            DocumentManipulator.getInstance(); //will initialize the listeners if needed
         }
     }
 }
