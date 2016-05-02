@@ -1,12 +1,10 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.bittle.beansmod;
 
+import org.bittle.utilities.TreePopup;
+import org.bittle.utilities.Share;
 import java.io.File;
 import java.io.IOException;
+import java.util.Enumeration;
 import java.util.prefs.Preferences;
 import javax.swing.JFileChooser;
 import javax.swing.JTree;
@@ -63,16 +61,6 @@ public final class BittleTreeTopComponent extends TopComponent {
         
         // Get the preferences of the options
         preferences = NbPreferences.forModule(BittlePanel.class);
-        
-        // Listen for changes to "status" preference
-        // Update log in state on any changes 
-        /*
-        preferences.addPreferenceChangeListener((PreferenceChangeEvent evt) -> {
-            if(evt.getKey().equals("status")){
-                loggedIn = evt.getNode().getBoolean("status", loggedIn);
-                updateTree();
-            }
-        });*/
     }
     
     /**
@@ -146,14 +134,14 @@ public final class BittleTreeTopComponent extends TopComponent {
             .addGroup(LoggedInScreenLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(LoggedInScreenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1)
                     .addGroup(LoggedInScreenLayout.createSequentialGroup()
                         .addComponent(addButton)
-                        .addGap(18, 18, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
                         .addComponent(RemoveAllButton)
-                        .addGap(18, 18, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
                         .addComponent(OptionsButton)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jScrollPane1))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         LoggedInScreenLayout.setVerticalGroup(
@@ -190,8 +178,11 @@ public final class BittleTreeTopComponent extends TopComponent {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(NotLoggedInScreenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(FlipGuy)
-                    .addComponent(NotLoggedInMessage)
-                    .addComponent(ToOptionsButton))
+                    .addComponent(NotLoggedInMessage))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(NotLoggedInScreenLayout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(ToOptionsButton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         NotLoggedInScreenLayout.setVerticalGroup(
@@ -370,12 +361,14 @@ public final class BittleTreeTopComponent extends TopComponent {
      * Reloads the tree
      */
     public void clearFiles() throws IOException{
-        rootNode.removeAllChildren();
         Share.getInstance().purgeFiles();
         treeModel.reload();
     }
     
-    public DefaultTreeModel getTreeModel(){
+    /**
+     * @return The tree model of the file tree
+     */
+    public DefaultTreeModel getModel(){
         return treeModel;
     }
     
@@ -386,6 +379,18 @@ public final class BittleTreeTopComponent extends TopComponent {
     */
     public DefaultMutableTreeNode addObject(Object child){
         return addObject(rootNode, child);
+    }
+    
+    /**
+     * Removes a node from the tree with the given filename
+     * @param filename The name of the node to be removed 
+     */
+    public void removeNode(String filename){
+        
+        DefaultMutableTreeNode foundNode = searchNode(filename);
+        
+        if(foundNode != null)
+            treeModel.removeNodeFromParent(foundNode);
     }
     
     /**
@@ -402,5 +407,24 @@ public final class BittleTreeTopComponent extends TopComponent {
         fileTree.scrollPathToVisible(new TreePath(childNode.getPath()));
         
         return childNode;
+    }
+    
+    /**
+     * Searches for a node in the file tree with the given filename 
+     * @param filename The name of the desired node
+     * @return The node with the given filename, or null if it doesn't exist 
+     */
+    private DefaultMutableTreeNode searchNode(String filename){
+        DefaultMutableTreeNode foundNode = null;
+         
+        Enumeration e = rootNode.breadthFirstEnumeration();
+        
+        while(e.hasMoreElements()){
+            foundNode = (DefaultMutableTreeNode) e.nextElement();
+            if(filename.equals(foundNode.getUserObject().toString()))
+                break;
+        }
+        
+        return foundNode;
     }
 }

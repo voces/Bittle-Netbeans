@@ -2,7 +2,7 @@ package org.bittle.messages;
 
 import com.eclipsesource.json.*;
 import java.io.IOException;
-import org.bittle.beansmod.Share;
+import org.bittle.utilities.Share;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 
@@ -12,9 +12,9 @@ import org.openide.NotifyDescriptor;
  */
 public class RemoveFileMessage implements Message {
     
-    private JsonObject message;
-    private String filename;
-    private String blame;
+    private JsonObject message;    // JSON message from the server
+    private String filename;       // Name of the file to be removed
+    private String blame;          // User who removed the file 
     
     public RemoveFileMessage(JsonObject message){
         this.message = message;

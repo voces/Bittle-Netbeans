@@ -1,10 +1,7 @@
 package org.bittle.messages;
 
+import org.bittle.utilities.*;
 import com.eclipsesource.json.*;
-import java.util.ArrayList;
-import java.util.List;
-import org.bittle.beansmod.*;
-import org.bittle.utilities.DocumentManipulator;
 
 /**
  * Lines Message 
@@ -12,12 +9,12 @@ import org.bittle.utilities.DocumentManipulator;
  */
 public class linesMessage implements Message {
     
-    private JsonObject message;
-    private JsonArray lines;
-    private String filename;
-    private String blame;
-    private int start;
-    private int deleteCount;
+    private JsonObject message;    // JSON message from the server
+    private JsonArray lines;       // Array of line changes
+    private String filename;       // Name of file being changed
+    private String blame;          // User who changed the file
+    private int start;             // Start column of the change
+    private int deleteCount;       // Number of characters being deleted 
     
     // Parse the JSON
     public linesMessage(JsonObject message){

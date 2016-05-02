@@ -1,14 +1,25 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.bittle.messages;
 
+import com.eclipsesource.json.*;
+import org.bittle.utilities.Share;
+
 /**
- *
+ * Remove Client Message
  * @author chmar
  */
-public class RemoveClientMessage {
+public class RemoveClientMessage implements Message {
+
+    private JsonObject message;    // The JSON message from the server 
+    private String name;           // Name of the user that was removed
+    
+    public RemoveClientMessage(JsonObject message){
+        this.message = message;
+        this.name = message.getString("name", null);
+    }
+    
+    @Override
+    public void handleMessage() {
+        Share.getInstance().removeUser(name);
+    }
     
 }

@@ -1,6 +1,5 @@
-package org.bittle.beansmod;
+package org.bittle.utilities;
 
-import org.bittle.utilities.Connection;
 import com.eclipsesource.json.*;
 import java.io.File;
 import java.io.IOException;
@@ -12,20 +11,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.prefs.Preferences;
+import org.bittle.beansmod.BittleTreeTopComponent;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.NbPreferences;
 import org.openide.windows.WindowManager;
 
 /**
  * A Singleton that represents the user's current share session
  * Contains two hash sets: one for the users in the share, 
  * and one for the files being shared.
- * Files being shared has 1 to 1 correspondence with bittle directory
- * and GUI tree
+ * Files being shared has 1 to 1 correspondence with bittle directory and GUI tree
  * @author chmar
  */
 public class Share {
@@ -34,11 +31,8 @@ public class Share {
         
     private final BittleTreeTopComponent fileTree;
     private final Connection connection;
-    private final Preferences preferences;
     
-    private boolean waitingForResponse;
     private String bittlePath;
-    private String owner;
     private String me;
     
     public HashSet<String> users;
@@ -56,23 +50,11 @@ public class Share {
         fileTree = (BittleTreeTopComponent) WindowManager.getDefault().findTopComponent("BittleTree");
         
         // Initialize what needs initializing 
-        waitingForResponse = false;
         users = new HashSet<>();
         files = new HashSet<>();
         
         // Get the connection to the server
         connection = Connection.getInstance();
-       
-       
-        // Gets the preferences stored in the options
-        preferences = NbPreferences.forModule(BittlePanel.class);
-        
-        // If the rootpath preference changes, update the bittlePath
-        /*
-        preferences.addPreferenceChangeListener((PreferenceChangeEvent evt) -> {
-            if(evt.getKey().equals("path"))
-                bittlePath = evt.getNewValue();
-        });*/
     }
     
     /**
@@ -159,6 +141,7 @@ public class Share {
      */
     public void removeFile(String filename) throws IOException{
         if(files.contains(filename)){
+            
             // Get the file object from the bittle directory 
             FileObject fo = FileUtil.toFileObject(FileUtil.normalizeFile(new File(getBittleFilePath(filename))));
             
@@ -167,13 +150,22 @@ public class Share {
                 Files.deleteIfExists(Paths.get(getBittleFilePath(filename)));
                 files.remove(filename);
                 connection.untrack(filename);
-                // Remove file from tree 
+                fileTree.removeNode(filename);
             }
             else{
                 NotifyDescriptor nd = new NotifyDescriptor.Message("Can not remove locked file " + filename, NotifyDescriptor.ERROR_MESSAGE);
                 DialogDisplayer.getDefault().notify(nd);
             }
         }
+    }
+    
+    /**
+     * Removes a user from the share
+     * @param name The name of the user to be removed 
+     */
+    public void removeUser(String name) {
+        if(users.contains(name) && !name.equals(me))
+            users.remove(name);
     }
     
     /**
@@ -216,9 +208,13 @@ public class Share {
         // Get the new users from the JSON
         List<JsonValue> newUsers = names.values();
         
-        // Add them to the share's user list 
+        // Add yourself to the share first 
+        users.add(me);
+        
+        // Add the rest of the users to the share 
         for(JsonValue user : newUsers)
-            users.add(user.asString());
+            if(!user.asString().equals(me))
+                users.add(user.asString());
         
         // Get the new files from the JSON
         List<JsonValue> newFiles = files.values();

@@ -1,27 +1,21 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.bittle.messages;
 
+import org.bittle.utilities.*;
 import com.eclipsesource.json.*;
-import org.bittle.beansmod.*;
-import org.bittle.utilities.DocumentManipulator;
 
 /**
- *
+ * Line Message
  * @author chmar
  */
 public class lineMessage implements Message {
 
-    private JsonObject message;
-    private String filename;
-    private String line;
-    private String blame;
-    private int lineIndex;
-    private int start;
-    private int deleteCount;
+    private JsonObject message;    // JSON message from the server
+    private String filename;       // Name of the file being changed
+    private String line;           // Change in the line of text 
+    private String blame;          // Name of the user who changed the file
+    private int lineIndex;         // Is this necessary here?
+    private int start;             // Start column of the change
+    private int deleteCount;       // Number of characters being deleted 
     
     // Parse the JSON
     public lineMessage(JsonObject message){

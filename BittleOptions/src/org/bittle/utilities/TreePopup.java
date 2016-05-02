@@ -1,6 +1,5 @@
-package org.bittle.beansmod;
+package org.bittle.utilities;
 
-import org.bittle.utilities.Connection;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import javax.swing.JMenuItem;
@@ -10,7 +9,8 @@ import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import org.openide.*;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 
 /**
  * Pop Up menu for file tree
@@ -19,7 +19,6 @@ import org.openide.*;
 public class TreePopup extends JPopupMenu{
     
     private Connection connection;
-    private boolean waitingForResponse = false;
     
     public TreePopup(JTree tree, DefaultTreeModel treeModel) {
         
@@ -41,14 +40,14 @@ public class TreePopup extends JPopupMenu{
                                                                                      NotifyDescriptor.QUESTION_MESSAGE, 
                                                                                      NotifyDescriptor.QUESTION_MESSAGE
                                                                                     );
+            
             shareMessage.setInputText("Enter collaborator's username");
+            
             Object result = DialogDisplayer.getDefault().notify(shareMessage);
+            
+            // If the user entered a name, invite that person 
             if(result == NotifyDescriptor.OK_OPTION){
-                String userName = shareMessage.getInputText();
-                
-                //NotifyDescriptor nd = new NotifyDescriptor.Message("Sending invitation to: " + userName, NotifyDescriptor.INFORMATION_MESSAGE);
-                //DialogDisplayer.getDefault().notify(nd);
-                
+                String userName = shareMessage.getInputText();                
                 connection.invite(userName);
             }
         });
@@ -64,9 +63,7 @@ public class TreePopup extends JPopupMenu{
             TreePath selection = tree.getSelectionPath();
             DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode)selection.getLastPathComponent();
             try {
-                System.out.println(share.getBittleFilePath((String) selectedNode.getUserObject()));
                 share.removeFile((String) selectedNode.getUserObject());
-                treeModel.removeNodeFromParent(selectedNode);
             } catch (IOException ex) {
             }
         });

@@ -10,7 +10,6 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.Element;
 import javax.swing.text.JTextComponent;
-import org.bittle.beansmod.*;
 import org.netbeans.api.editor.EditorRegistry;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -83,7 +82,6 @@ public class DocumentManipulator {
                                             numberOfLines = currentNumberOfLines;
                                             String[] lines = addedText.split("(?<=\\r?\\n)"); //splits on \r or \n, and appends it to the end of the string if it's there
                                             
-                                            //String JSONlines = JSONArray.toJSONString(Arrays.asList(lines));
                                             connection.lines(currentFileName, e.getOffset(), 0, Json.array(lines));
                                         } else {
                                             //single-line insert
