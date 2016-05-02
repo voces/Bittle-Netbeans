@@ -1,13 +1,7 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.bittle.messages;
 
-import org.bittle.utilities.Connection;
+import org.bittle.utilities.*;
 import com.eclipsesource.json.*;
-import org.bittle.beansmod.*;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 
@@ -35,9 +29,12 @@ public class AddFileMessage implements Message {
         
         // Ignore files added by self 
         if(blame != null && !blame.equals(Share.getInstance().getMe())){
+            
+            // If you don't already have the file, get it from the server 
             if(!Share.getInstance().files.contains(filename))
                 Connection.getInstance().get(filename);
             
+            // Notify the user the file was added 
             NotifyDescriptor nd = new NotifyDescriptor.Message(
                     blame + " has added " + filename + " to the share session", 
                     NotifyDescriptor.INFORMATION_MESSAGE

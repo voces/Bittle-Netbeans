@@ -10,7 +10,6 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.Element;
 import javax.swing.text.JTextComponent;
-import org.bittle.beansmod.*;
 import org.netbeans.api.editor.EditorRegistry;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;

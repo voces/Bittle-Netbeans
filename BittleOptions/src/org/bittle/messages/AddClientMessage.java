@@ -1,13 +1,8 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.bittle.messages;
 
 import com.eclipsesource.json.*;
 import java.io.IOException;
-import org.bittle.beansmod.Share;
+import org.bittle.utilities.Share;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 
@@ -39,7 +34,11 @@ public class AddClientMessage implements Message {
 
     @Override
     public void handleMessage() {
+        
+        // If the message is a notification type 
         if(name != null){
+            
+            // Notify the user if they weren't the ones that added the client 
             if(!blame.equals(Share.getInstance().getMe())){
             NotifyDescriptor nd = new NotifyDescriptor.Message(
                     blame + " added " + name + "to the share session", 
@@ -48,6 +47,7 @@ public class AddClientMessage implements Message {
             DialogDisplayer.getDefault().notify(nd);
             }
         }
+        // Otherwise give the new client the share 
         else{
             try {
                 JsonArray namesArray = names.asArray();

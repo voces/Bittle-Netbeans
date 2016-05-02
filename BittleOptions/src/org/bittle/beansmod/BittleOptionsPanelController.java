@@ -50,6 +50,10 @@ public final class BittleOptionsPanelController extends OptionsPanelController {
     public void setLoginState(boolean state){
         getPanel().setLoginState(state);
     }
+    
+    public boolean loggedIn(){
+        return getPanel().getLoginState();
+    }
 
     @Override
     public void update() {

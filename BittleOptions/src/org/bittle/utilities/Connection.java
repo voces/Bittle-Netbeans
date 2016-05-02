@@ -9,11 +9,7 @@ import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketError;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
-import org.eclipse.jetty.websocket.api.annotations.WebSocket;
+import org.eclipse.jetty.websocket.api.annotations.*;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 
 @WebSocket
@@ -34,6 +30,7 @@ public class Connection {
     
     private static final Logger LOG = Log.getLogger(Connection.class);
     private static Session session = null;
+    private static boolean connected = false;
     
     @OnWebSocketConnect
     public void onConnect(Session sess)
@@ -44,6 +41,13 @@ public class Connection {
     @OnWebSocketClose
     public void onClose(int statusCode, String reason)
     {
+        connected = false;
+        
+        BittleOptionsPanelController options = BittleOptionsPanelController.getInstance();
+        
+        if(!options.loggedIn())
+            options.logOut();
+           
         LOG.info("onClose({}, {})", statusCode, reason);
     }
 
@@ -57,9 +61,6 @@ public class Connection {
     public void onMessage(String msg)
     {
         LOG.info("onMessage() - {}", msg);
-        
-        //NotifyDescriptor nd = new NotifyDescriptor.Message(msg, NotifyDescriptor.INFORMATION_MESSAGE);
-        //DialogDisplayer.getDefault().notify(nd);
         
         // Parse the message as a JSON object
         JsonObject jsonMessage = Json.parse(msg).asObject();
@@ -99,8 +100,7 @@ public class Connection {
                 message = new AddFileMessage(jsonMessage);
                 break;
             case "removeClient":
-                // TODO
-                message = null;
+                message = new RemoveClientMessage(jsonMessage);
                 break;
             case "removeFile":
                 message = new RemoveFileMessage(jsonMessage);
@@ -114,27 +114,20 @@ public class Connection {
             case "line":
                 message = new lineMessage(jsonMessage);
                 break;
-                // Look in File.js for both of these
-                // Don't know what to do for these yet 
-                // If these have a status field, then it has a reason instead of the line data 
             default:
                 message = null;
                 break;
         }
         
-        // Send the message to all the listeners 
+        // If there is a message to handle, handle it 
         if(message != null)
             message.handleMessage();
-        //fireMessage(message);
-        
-        //on the message responding to an editor change, check awaitingServerResponseForEdit flag; true = don't update, false = update
-        //not the best solution because this client won't get any editor updates until getting a response from the server?
-        //might be able to get around this if the server's messages for line changes have something that tells us an update is from another client  
     }
     
     public void connect(String url) {
-//        String url = "wss://notextures.io:8086";
-
+        if(connected)
+            return;
+        
         SslContextFactory sslContextFactory = new SslContextFactory();
         sslContextFactory.setTrustAll(true); // Good for testing, but make sure to change later
 
@@ -145,7 +138,7 @@ public class Connection {
             Connection socket = new Connection();
             Future<Session> fut = client.connect(socket,URI.create(url));
             session = fut.get();
-//            session.getRemote().sendString("{\"id\": \"clean\"}");
+            connected = true;
         }
         catch (Throwable t)
         {
@@ -157,6 +150,7 @@ public class Connection {
         if(session != null){
             BittleOptionsPanelController.getInstance().logOut();
             session.close();
+            connected = false;
         }
     }
     

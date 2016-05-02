@@ -1,16 +1,11 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.bittle.messages;
 
+import org.bittle.utilities.Share;
 import com.eclipsesource.json.*;
 import java.io.IOException;
-import org.bittle.beansmod.*;
 
 /**
- *
+ * Get Message
  * @author chmar
  */
 public class getMessage implements Message {
@@ -28,7 +23,6 @@ public class getMessage implements Message {
         this.status = message.getString("status", null);
         this.lines = message.get("lines").asArray();
     }
-
 
     @Override
     public void handleMessage() {
