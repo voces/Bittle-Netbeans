@@ -153,19 +153,11 @@ public class DocumentManipulator {
     public synchronized void insertLines(String[] lines, String fileName, int startLineIndex) {
         if (fileName.equals(currentFileName)) {
             shouldIgnoreUpdates = true;
+            int startOffsetOfCurrentLine;
             for (String text : lines) {
-                Element line = currentDocument.getDefaultRootElement().getElement(startLineIndex);
-                if (line != null) {
-                    //remove
-                    try {
-                        currentDocument.remove(line.getStartOffset(), line.getEndOffset() - line.getStartOffset());
-                    } catch (BadLocationException ex) {
-                        Exceptions.printStackTrace(ex);
-                    }
-                }
-                //add
+                startOffsetOfCurrentLine = currentDocument.getDefaultRootElement().getElement(startLineIndex).getStartOffset();
                 try {
-                    currentDocument.insertString(line.getEndOffset(), text, null);
+                    currentDocument.insertString(startOffsetOfCurrentLine, text, null);
                 } catch (BadLocationException ex) {
                     Exceptions.printStackTrace(ex);
                 }
