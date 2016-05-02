@@ -81,7 +81,7 @@ public class DocumentManipulator {
                                        if (numberOfLines != currentNumberOfLines) {
                                             //multi-line insert, split lines and send as JSON array of strings
                                             numberOfLines = currentNumberOfLines;
-                                            String[] lines = addedText.split("(?<=\\r?\\n)"); //splits on \r or \n, and appends it to the end of the string
+                                            String[] lines = addedText.split("(?<=\\r?\\n)"); //splits on \r or \n, and appends it to the end of the string if it's there
                                             
                                             //String JSONlines = JSONArray.toJSONString(Arrays.asList(lines));
                                             connection.lines(currentFileName, e.getOffset(), 0, Json.array(lines));
@@ -139,6 +139,7 @@ public class DocumentManipulator {
         //this should at some point check if the file is open in an editor,
         //if it is then change the opened file's editor
         //if not, then write to the file itself
+        //currently, it will only update if its the current file open
         if (fileName.equals(currentFileName)) {
             shouldIgnoreUpdates = true;
             try {
@@ -150,18 +151,16 @@ public class DocumentManipulator {
         }
     }
     
-    public synchronized void insertLines(String[] lines, String fileName, int startLineIndex) {
+    public synchronized void insertLines(String[] lines, String fileName, int startOffset) {
         if (fileName.equals(currentFileName)) {
             shouldIgnoreUpdates = true;
-            int startOffsetOfCurrentLine;
             for (String text : lines) {
-                startOffsetOfCurrentLine = currentDocument.getDefaultRootElement().getElement(startLineIndex).getStartOffset();
                 try {
-                    currentDocument.insertString(startOffsetOfCurrentLine, text, null);
+                    currentDocument.insertString(startOffset, text, null);
                 } catch (BadLocationException ex) {
                     Exceptions.printStackTrace(ex);
                 }
-                startLineIndex++;
+                startOffset += text.length();
             }
             shouldIgnoreUpdates = false;
         }
@@ -179,31 +178,14 @@ public class DocumentManipulator {
         }
     }
     
-    public synchronized void deleteLines(String[] lines, String fileName, int startLineIndex, int deleteCount) {
+    public synchronized void deleteLines(String[] lines, String fileName, int startCharacterOffset, int deleteCount) {
         if (fileName.equals(currentFileName)) {
             shouldIgnoreUpdates = true;
-            int lineNumber = startLineIndex;
-            Element currentLine;
-            //remove lines
-            for (int i = 0; i < deleteCount; i++) {
-                currentLine = currentDocument.getDefaultRootElement().getElement(lineNumber);
                 try {
-                    currentDocument.remove(currentLine.getStartOffset(), currentLine.getEndOffset());
+                    currentDocument.remove(startCharacterOffset, deleteCount);
                 } catch (BadLocationException ex) {
                     Exceptions.printStackTrace(ex);
                 }
-                lineNumber++;
-            }
-            //add lines
-            for (String line : lines) {
-                currentLine = currentDocument.getDefaultRootElement().getElement(startLineIndex);
-                try {
-                    currentDocument.insertString(currentLine.getEndOffset(), line, null);
-                } catch (BadLocationException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
-                startLineIndex++;
-            }
             shouldIgnoreUpdates = false;
         }
     }
