@@ -14,7 +14,7 @@ import org.openide.util.Lookup;
         keywords = "#OptionsCategory_Keywords_Bittle",
         keywordsCategory = "Bittle",
         id = "BittleOptions",
-        position = 0
+        position = 9999999
 )
 @org.openide.util.NbBundle.Messages({"OptionsCategory_Name_Bittle=Bittle", "OptionsCategory_Keywords_Bittle=Bittle, log in, register, sync, lol, idk"})
 public final class BittleOptionsPanelController extends OptionsPanelController {
