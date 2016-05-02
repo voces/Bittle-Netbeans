@@ -149,16 +149,16 @@ public class DocumentManipulator {
         }
     }
     
-    public synchronized void insertLines(String[] lines, String fileName, int startOffset) {
+    public synchronized void insertLines(String[] lines, String fileName, int startPosition) {
         if (fileName.equals(currentFileName)) {
             shouldIgnoreUpdates = true;
             for (String text : lines) {
                 try {
-                    currentDocument.insertString(startOffset, text, null);
+                    currentDocument.insertString(startPosition, text, null);
                 } catch (BadLocationException ex) {
                     Exceptions.printStackTrace(ex);
                 }
-                startOffset += text.length();
+                startPosition += text.length();
             }
             shouldIgnoreUpdates = false;
         }
@@ -176,11 +176,11 @@ public class DocumentManipulator {
         }
     }
     
-    public synchronized void deleteLines(String[] lines, String fileName, int startCharacterOffset, int deleteCount) {
+    public synchronized void deleteLines(String[] lines, String fileName, int startPosition, int deleteCount) {
         if (fileName.equals(currentFileName)) {
             shouldIgnoreUpdates = true;
                 try {
-                    currentDocument.remove(startCharacterOffset, deleteCount);
+                    currentDocument.remove(startPosition, deleteCount);
                 } catch (BadLocationException ex) {
                     Exceptions.printStackTrace(ex);
                 }
