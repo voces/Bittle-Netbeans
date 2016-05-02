@@ -81,7 +81,8 @@ public class DocumentManipulator {
                                        if (numberOfLines != currentNumberOfLines) {
                                             //multi-line insert, split lines and send as JSON array of strings
                                             numberOfLines = currentNumberOfLines;
-                                            String[] lines = addedText.split("\\r?\\n");
+                                            String[] lines = addedText.split("(?<=\\r?\\n)"); //splits on \r or \n, and appends it to the end of the string
+                                            
                                             //String JSONlines = JSONArray.toJSONString(Arrays.asList(lines));
                                             connection.lines(currentFileName, e.getOffset(), 0, Json.array(lines));
                                         } else {
