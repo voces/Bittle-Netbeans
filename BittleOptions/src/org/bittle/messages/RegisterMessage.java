@@ -39,7 +39,7 @@ public class RegisterMessage implements Message {
             DialogDisplayer.getDefault().notify(nd);
         }
         else{
-            NotifyDescriptor nd = new NotifyDescriptor.Message("Acount created!", NotifyDescriptor.INFORMATION_MESSAGE);
+            NotifyDescriptor nd = new NotifyDescriptor.Message("Account created!", NotifyDescriptor.INFORMATION_MESSAGE);
             DialogDisplayer.getDefault().notify(nd);
         }
     }

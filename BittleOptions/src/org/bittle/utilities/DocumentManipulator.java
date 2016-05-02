@@ -26,6 +26,7 @@ public class DocumentManipulator {
     private String currentFileName = "";
     private PropertyChangeListener listener;
     private boolean shouldIgnoreUpdates = false;
+    private int numberOfLines;
     
     private static DocumentManipulator instance;
     
@@ -55,6 +56,7 @@ public class DocumentManipulator {
                         currentFileName = Paths.get(filePath).getFileName().toString();
 
                         if (Share.getInstance().files.contains(currentFileName)) {
+                            numberOfLines = currentDocument.getDefaultRootElement().getElementCount();
                             //if the file is being shared, attach a listener to its document
                             currentDocument.addDocumentListener(currentDocumentListener = new DocumentListener() {
 
@@ -75,8 +77,10 @@ public class DocumentManipulator {
                                         } catch (BadLocationException ex) {
                                             Exceptions.printStackTrace(ex);
                                         }
-                                        if (startingLineNumber != endingLineNumber) {
+                                        int currentNumberOfLines = currentDocument.getDefaultRootElement().getElementCount();
+                                       if (numberOfLines != currentNumberOfLines) {
                                             //multi-line insert, split lines and send as JSON array of strings
+                                            numberOfLines = currentNumberOfLines;
                                             String[] lines = addedText.split("\\r?\\n");
                                             //String JSONlines = JSONArray.toJSONString(Arrays.asList(lines));
                                             connection.lines(currentFileName, e.getOffset(), 0, Json.array(lines));
@@ -90,23 +94,27 @@ public class DocumentManipulator {
                                 @Override
                                 public void removeUpdate(DocumentEvent e) {
                                     if (!shouldIgnoreUpdates) {
+                                        //e.offset is where the cursor ends up after the delete
+                                        //e.length is the number of characters deleted (including newlines)
+                                        
                                         //send message
                                         int startingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset()); //line # of cursor after the delete
-                                        int endingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset() + e.getLength()); //line # of the last part of deleted text
-                                        //lineEnd will default to the last line if the line number it used to be on exceeds the new line count, so check for that as well
-                                        if (startingLineNumber != endingLineNumber || e.getOffset() + e.getLength() > currentDocument.getLength()) {
+                                        int currentNumberOfLines = currentDocument.getDefaultRootElement().getElementCount();
+                                        if (numberOfLines != currentNumberOfLines) {
+                                            //multi-line delete
+                                            numberOfLines = currentNumberOfLines;
                                             //get line of text of the current line (lineStart)
                                             Element currentLine = currentDocument.getDefaultRootElement().getElement(startingLineNumber);
-                                            String currentLineText = null;
+                                            String currentLineText;
                                             try {
-                                                currentLineText = currentDocument.getText(currentLine.getStartOffset(), currentLine.getEndOffset() - currentLine.getStartOffset());
+                                                currentLineText = currentDocument.getText(currentLine.getStartOffset(), currentLine.getElementCount());
                                                 currentLineText = currentLineText.replace("\n", ""); //strip the newline
                                                 connection.lines(currentFileName, e.getOffset(), e.getLength(), Json.array(currentLineText));
                                             } catch (BadLocationException ex) {
                                                 Exceptions.printStackTrace(ex);
                                             }
                                         } else {
-                                            //single-line insert
+                                            //single-line delete
                                             connection.line(currentFileName, startingLineNumber, e.getOffset(), e.getLength(), "");
                                         }
                                     }
