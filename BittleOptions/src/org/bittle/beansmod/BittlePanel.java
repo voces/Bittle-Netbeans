@@ -70,7 +70,10 @@ final class BittlePanel extends javax.swing.JPanel {
         PasswordLabel1 = new javax.swing.JLabel();
         SignupUserField = new javax.swing.JTextField();
         SignupPassField = new javax.swing.JPasswordField();
+        PasswordLabel2 = new javax.swing.JLabel();
+        SignupConfirmField = new javax.swing.JPasswordField();
         RegisterButton = new javax.swing.JButton();
+        PasswordLabel3 = new javax.swing.JLabel();
         LoggedInPanel = new javax.swing.JPanel();
         LoggedInLabel = new javax.swing.JLabel();
         jSeparator1 = new javax.swing.JSeparator();
@@ -81,6 +84,8 @@ final class BittlePanel extends javax.swing.JPanel {
         currPassField = new javax.swing.JPasswordField();
         newPassField = new javax.swing.JPasswordField();
         ChangePassButton = new javax.swing.JButton();
+        ConfirmPassField = new javax.swing.JPasswordField();
+        NewPassLabel1 = new javax.swing.JLabel();
         LogOutPanel = new javax.swing.JPanel();
         LogOutButton = new javax.swing.JButton();
         DoneLabel = new javax.swing.JLabel();
@@ -169,6 +174,12 @@ final class BittlePanel extends javax.swing.JPanel {
         SignupPassField.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
         SignupPassField.setText(org.openide.util.NbBundle.getMessage(BittlePanel.class, "BittlePanel.SignupPassField.text")); // NOI18N
 
+        PasswordLabel2.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(PasswordLabel2, org.openide.util.NbBundle.getMessage(BittlePanel.class, "BittlePanel.PasswordLabel2.text")); // NOI18N
+
+        SignupConfirmField.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
+        SignupConfirmField.setText(org.openide.util.NbBundle.getMessage(BittlePanel.class, "BittlePanel.SignupConfirmField.text")); // NOI18N
+
         RegisterButton.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(RegisterButton, org.openide.util.NbBundle.getMessage(BittlePanel.class, "BittlePanel.RegisterButton.text")); // NOI18N
         RegisterButton.addActionListener(new java.awt.event.ActionListener() {
@@ -177,6 +188,9 @@ final class BittlePanel extends javax.swing.JPanel {
             }
         });
 
+        PasswordLabel3.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(PasswordLabel3, org.openide.util.NbBundle.getMessage(BittlePanel.class, "BittlePanel.PasswordLabel3.text")); // NOI18N
+
         javax.swing.GroupLayout SignupSideLayout = new javax.swing.GroupLayout(SignupSide);
         SignupSide.setLayout(SignupSideLayout);
         SignupSideLayout.setHorizontalGroup(
@@ -184,19 +198,30 @@ final class BittlePanel extends javax.swing.JPanel {
             .addGroup(SignupSideLayout.createSequentialGroup()
                 .addGroup(SignupSideLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(SignupSideLayout.createSequentialGroup()
-                        .addGap(58, 58, 58)
-                        .addComponent(RegisterLabel))
-                    .addGroup(SignupSideLayout.createSequentialGroup()
+                        .addGroup(SignupSideLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(SignupSideLayout.createSequentialGroup()
+                                .addGap(58, 58, 58)
+                                .addComponent(RegisterLabel))
+                            .addGroup(SignupSideLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(SignupSideLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(UsernameLabel1)
+                                    .addComponent(PasswordLabel1))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(SignupSideLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(SignupPassField, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(SignupUserField, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, SignupSideLayout.createSequentialGroup()
                         .addContainerGap()
                         .addGroup(SignupSideLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(UsernameLabel1)
-                            .addComponent(PasswordLabel1))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(PasswordLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(PasswordLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(SignupSideLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(SignupPassField, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(SignupUserField, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(RegisterButton))))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(RegisterButton)
+                            .addComponent(SignupConfirmField, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addContainerGap())
         );
         SignupSideLayout.setVerticalGroup(
             SignupSideLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -206,14 +231,22 @@ final class BittlePanel extends javax.swing.JPanel {
                 .addGap(18, 18, 18)
                 .addGroup(SignupSideLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(UsernameLabel1)
-                    .addComponent(SignupUserField, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
+                    .addComponent(SignupUserField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(22, 22, 22)
                 .addGroup(SignupSideLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(PasswordLabel1)
                     .addComponent(SignupPassField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
+                .addGroup(SignupSideLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(SignupSideLayout.createSequentialGroup()
+                        .addComponent(PasswordLabel2)
+                        .addComponent(PasswordLabel3))
+                    .addGroup(SignupSideLayout.createSequentialGroup()
+                        .addGap(10, 10, 10)
+                        .addComponent(SignupConfirmField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 22, Short.MAX_VALUE)
                 .addComponent(RegisterButton)
-                .addContainerGap(21, Short.MAX_VALUE))
+                .addGap(30, 30, 30))
         );
 
         javax.swing.GroupLayout LogInPanelLayout = new javax.swing.GroupLayout(LogInPanel);
@@ -237,9 +270,9 @@ final class BittlePanel extends javax.swing.JPanel {
                     .addComponent(jSeparator2)
                     .addGroup(LogInPanelLayout.createSequentialGroup()
                         .addGroup(LogInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(SignupSide, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(LoginSide, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addComponent(LoginSide, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(SignupSide, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addContainerGap(116, Short.MAX_VALUE))))
         );
 
         LoggedInPanel.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
@@ -268,6 +301,10 @@ final class BittlePanel extends javax.swing.JPanel {
             }
         });
 
+        ConfirmPassField.setText(org.openide.util.NbBundle.getMessage(BittlePanel.class, "BittlePanel.ConfirmPassField.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(NewPassLabel1, org.openide.util.NbBundle.getMessage(BittlePanel.class, "BittlePanel.NewPassLabel1.text")); // NOI18N
+
         javax.swing.GroupLayout ChangePassPanelLayout = new javax.swing.GroupLayout(ChangePassPanel);
         ChangePassPanel.setLayout(ChangePassPanelLayout);
         ChangePassPanelLayout.setHorizontalGroup(
@@ -278,11 +315,13 @@ final class BittlePanel extends javax.swing.JPanel {
                     .addGroup(ChangePassPanelLayout.createSequentialGroup()
                         .addGroup(ChangePassPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(CurrPassLabel)
-                            .addComponent(NewPassLabel))
+                            .addComponent(NewPassLabel)
+                            .addComponent(NewPassLabel1))
                         .addGap(18, 18, 18)
                         .addGroup(ChangePassPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(currPassField, javax.swing.GroupLayout.DEFAULT_SIZE, 148, Short.MAX_VALUE)
-                            .addComponent(newPassField)))
+                            .addComponent(newPassField)
+                            .addComponent(ConfirmPassField)))
                     .addComponent(ChangePassButton)
                     .addComponent(ChangePassLabel))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -301,8 +340,12 @@ final class BittlePanel extends javax.swing.JPanel {
                     .addComponent(NewPassLabel)
                     .addComponent(newPassField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
+                .addGroup(ChangePassPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(ConfirmPassField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(NewPassLabel1))
+                .addGap(18, 18, Short.MAX_VALUE)
                 .addComponent(ChangePassButton)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         org.openide.awt.Mnemonics.setLocalizedText(LogOutButton, org.openide.util.NbBundle.getMessage(BittlePanel.class, "BittlePanel.LogOutButton.text")); // NOI18N
@@ -381,15 +424,15 @@ final class BittlePanel extends javax.swing.JPanel {
         LoggedInPanelLayout.setHorizontalGroup(
             LoggedInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(LoggedInPanelLayout.createSequentialGroup()
-                .addContainerGap(50, Short.MAX_VALUE)
+                .addContainerGap(59, Short.MAX_VALUE)
                 .addComponent(ChangeDirectoryPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 56, Short.MAX_VALUE)
+                .addGap(18, 64, Short.MAX_VALUE)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 56, Short.MAX_VALUE)
+                .addGap(18, 64, Short.MAX_VALUE)
                 .addGroup(LoggedInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(ChangePassPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(LogOutPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(53, Short.MAX_VALUE))
+                .addContainerGap(61, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, LoggedInPanelLayout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(LoggedInLabel)
@@ -405,12 +448,12 @@ final class BittlePanel extends javax.swing.JPanel {
                     .addComponent(jSeparator1)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, LoggedInPanelLayout.createSequentialGroup()
                         .addComponent(ChangePassPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(18, 18, 18)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(LogOutPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(LoggedInPanelLayout.createSequentialGroup()
                         .addComponent(ChangeDirectoryPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 136, Short.MAX_VALUE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
 
         OptionsLayeredPane.setLayer(LogInPanel, javax.swing.JLayeredPane.DEFAULT_LAYER);
@@ -477,14 +520,8 @@ final class BittlePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_BrowseButtonActionPerformed
 
     private void LogOutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LogOutButtonActionPerformed
-
-        // Log out from the server and initialize state
-        logOut();
-        
-        // Update the login screen and file tree
-        LoggedInPanel.setVisible(false);
-        LogInPanel.setVisible(true);
-        fileTree.updateTree();
+        // Closing the connection will log out the user as well 
+        connection.close();
     }//GEN-LAST:event_LogOutButtonActionPerformed
 
     private void ChangePassButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ChangePassButtonActionPerformed
@@ -492,6 +529,13 @@ final class BittlePanel extends javax.swing.JPanel {
         // Get the user input 
         String pass = currPassField.getText();
         String newPass = newPassField.getText();
+        String confirmPass = ConfirmPassField.getText();
+        
+        if(!newPass.equals(confirmPass)){
+            NotifyDescriptor nd = new NotifyDescriptor.Message("Passwords Do Not Match!", NotifyDescriptor.ERROR_MESSAGE);
+            DialogDisplayer.getDefault().notify(nd);
+            return;
+        }
         
         // Send the input to the server 
         connection.changePass(username, pass, newPass);
@@ -570,6 +614,9 @@ final class BittlePanel extends javax.swing.JPanel {
         
         String newUser = SignupUserField.getText();
         String newPass = SignupPassField.getText();
+        String confirmPass = SignupConfirmField.getText();
+        
+        connection.connect(serverName);
         
         waitingForResponse = true;
         
@@ -596,7 +643,7 @@ final class BittlePanel extends javax.swing.JPanel {
     
     /**
      * If the user is logged in
-     * Logs out from the server and resets preferences 
+     * Logs out from the server and resets preferences and screens 
      */
     public void logOut(){
         if(loggedIn){
@@ -605,6 +652,11 @@ final class BittlePanel extends javax.swing.JPanel {
             username = "";
             password = "";
             store();
+            
+            // Update the login screen and file tree
+            LoggedInPanel.setVisible(false);
+            LogInPanel.setVisible(true);
+            fileTree.updateTree();
         }
     }
     
@@ -661,6 +713,7 @@ final class BittlePanel extends javax.swing.JPanel {
     private javax.swing.JButton ChangePassButton;
     private javax.swing.JLabel ChangePassLabel;
     private javax.swing.JPanel ChangePassPanel;
+    private javax.swing.JPasswordField ConfirmPassField;
     private javax.swing.JLabel CurrPassLabel;
     private javax.swing.JTextField CurrentDirectoryField;
     private javax.swing.JLabel CurrentDirectoryLabel;
@@ -676,11 +729,15 @@ final class BittlePanel extends javax.swing.JPanel {
     private javax.swing.JPanel LoginSide;
     private javax.swing.JTextField LoginUserField;
     private javax.swing.JLabel NewPassLabel;
+    private javax.swing.JLabel NewPassLabel1;
     private javax.swing.JLayeredPane OptionsLayeredPane;
     private javax.swing.JLabel PasswordLabel;
     private javax.swing.JLabel PasswordLabel1;
+    private javax.swing.JLabel PasswordLabel2;
+    private javax.swing.JLabel PasswordLabel3;
     private javax.swing.JButton RegisterButton;
     private javax.swing.JLabel RegisterLabel;
+    private javax.swing.JPasswordField SignupConfirmField;
     private javax.swing.JPasswordField SignupPassField;
     private javax.swing.JPanel SignupSide;
     private javax.swing.JTextField SignupUserField;
@@ -714,6 +771,11 @@ final class BittlePanel extends javax.swing.JPanel {
     private boolean validSignup() {
         if("".equals(SignupPassField.getText()) || "".equals(SignupUserField.getText())){
             NotifyDescriptor nd = new NotifyDescriptor.Message("Fields cannot be blank!", NotifyDescriptor.ERROR_MESSAGE);
+            DialogDisplayer.getDefault().notify(nd);
+            return false;
+        }
+        if(!SignupPassField.getText().equals(SignupConfirmField.getText())){
+            NotifyDescriptor nd = new NotifyDescriptor.Message("Passwords Do Not Match!", NotifyDescriptor.ERROR_MESSAGE);
             DialogDisplayer.getDefault().notify(nd);
             return false;
         }

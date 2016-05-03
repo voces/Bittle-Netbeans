@@ -2,6 +2,8 @@ package org.bittle.messages;
 
 import com.eclipsesource.json.*;
 import org.bittle.utilities.Share;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 
 /**
  * Remove Client Message
@@ -19,7 +21,13 @@ public class RemoveClientMessage implements Message {
     
     @Override
     public void handleMessage() {
-        Share.getInstance().removeUser(name);
+        if(!name.equals(Share.getInstance().getMe())){
+            NotifyDescriptor nd = new NotifyDescriptor.Message(
+                    name + " has been removed from the share session", 
+                    NotifyDescriptor.INFORMATION_MESSAGE
+            );
+            DialogDisplayer.getDefault().notify(nd);
+            Share.getInstance().removeUser(name);
+        }
     }
-    
 }
