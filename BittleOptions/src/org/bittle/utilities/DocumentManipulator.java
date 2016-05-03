@@ -75,7 +75,12 @@ public class DocumentManipulator {
                                     
                                     //continue with the remove
                                     try {
-                                        fb.remove(offset, length);
+                                        if (offset + length <= fb.getDocument().getLength()) {
+                                            fb.remove(offset, length);
+                                        }
+                                        else {
+                                            fb.remove(offset, length - 1);
+                                        }
                                     } catch (BadLocationException ex) {
                                         Exceptions.printStackTrace(ex);
                                     }
@@ -162,7 +167,7 @@ public class DocumentManipulator {
                                                 currentLineText = currentDocument.getText(currentLine.getStartOffset(), currentLine.getEndOffset() - currentLine.getStartOffset());
                                                 currentLineText = currentLineText.replace("\n", ""); //strip the newline
                                                 
-                                                int endingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset() + e.getLength());
+//                                                int endingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset() + e.getLength());
                                                 
                                                 connection.lines(currentFileName, currentDocument.getDefaultRootElement().getElementIndex(e.getOffset()), numberOfLinesBeingRemoved, Json.array(currentLineText));
                                             } catch (BadLocationException ex) {
@@ -214,6 +219,8 @@ public class DocumentManipulator {
             try {
                 Element line;
                 for (int i = 0; i < deleteCount; i++) {
+                    if (currentDocument.getText(0, currentDocument.getLength()).equals(""))
+                        break; //because there's nothing left to remove
                     line = currentDocument.getDefaultRootElement().getElement(startLine);
                     currentDocument.remove(line.getStartOffset(), line.getEndOffset() - line.getStartOffset());
                 }
@@ -222,9 +229,13 @@ public class DocumentManipulator {
             }
 
             //insert lines
-            String text = String.join(System.lineSeparator(), lines) + (deleteCount == 0 ? System.lineSeparator() : "");
+            String text = String.join("\n", lines);// + ((lines.length == 1 && deleteCount != numberOfLines || deleteCount == 0) ? "\n" : ""); //append \n if needed
+            //add a newline if text follows
+            int startingPoint = currentDocument.getDefaultRootElement().getElement(startLine).getStartOffset();
+            if (startingPoint != currentDocument.getLength())
+                text += "\n";
             try {
-                currentDocument.insertString(currentDocument.getDefaultRootElement().getElement(startLine).getStartOffset(), text + System.lineSeparator(), null);
+                currentDocument.insertString(startingPoint, text/* + (currentDocument.getText(0, currentDocument.getLength()).equals("") ? "" : "")*/, null);
             } catch (BadLocationException ex) {
                 Exceptions.printStackTrace(ex);
             }
