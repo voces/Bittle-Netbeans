@@ -83,7 +83,7 @@ public class DocumentManipulator {
                                                 Exceptions.printStackTrace(ex);
                                             }
                                             numberOfLines = currentNumberOfLines;
-                                            String[] lines = text.split("(\\r?\\n)", -1); //splits on \r \n
+                                            String[] lines = text.split(System.lineSeparator(), -1); //regex: "(\\r?\\n)", splits on \r \n
 
                                             connection.lines(currentFileName, startingLineNumber, 1, Json.array(lines));
                                         } else {
@@ -116,7 +116,7 @@ public class DocumentManipulator {
                                             String currentLineText;
                                             try {
                                                 currentLineText = currentDocument.getText(currentLine.getStartOffset(), currentLine.getEndOffset() - currentLine.getStartOffset());
-                                                currentLineText = currentLineText.replace("\n", ""); //strip the newline
+                                                currentLineText = currentLineText.replace(System.lineSeparator(), ""); //strip the newline
                                                 
                                                 int endingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset() + e.getLength());
                                                 
@@ -178,9 +178,9 @@ public class DocumentManipulator {
             }
 
             //insert lines
-            String text = String.join(System.getProperty("line.separator"), lines) + (deleteCount == 0 ? "\n" : "");
+            String text = String.join(System.lineSeparator(), lines) + (deleteCount == 0 ? System.lineSeparator() : "");
             try {
-                currentDocument.insertString(currentDocument.getDefaultRootElement().getElement(startLine).getStartOffset(), text + System.getProperty("line.separator"), null);
+                currentDocument.insertString(currentDocument.getDefaultRootElement().getElement(startLine).getStartOffset(), text + System.lineSeparator(), null);
             } catch (BadLocationException ex) {
                 Exceptions.printStackTrace(ex);
             }
