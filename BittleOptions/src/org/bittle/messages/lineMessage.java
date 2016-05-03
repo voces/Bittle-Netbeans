@@ -32,7 +32,7 @@ public class lineMessage implements Message {
     public void handleMessage() {
         if(blame != null && !blame.equals(Share.getInstance().getMe())){
             if (deleteCount > 0)
-                DocumentManipulator.getInstance().deleteText(filename, start, deleteCount);
+                DocumentManipulator.getInstance().deleteText(filename, start, deleteCount, lineIndex);
             else
                 DocumentManipulator.getInstance().insertText(line, filename, start, lineIndex);
         }

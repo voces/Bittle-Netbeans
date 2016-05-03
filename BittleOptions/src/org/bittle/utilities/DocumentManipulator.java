@@ -117,7 +117,10 @@ public class DocumentManipulator {
                                             try {
                                                 currentLineText = currentDocument.getText(currentLine.getStartOffset(), currentLine.getElementCount());
                                                 currentLineText = currentLineText.replace("\n", ""); //strip the newline
-                                                connection.lines(currentFileName, e.getOffset(), e.getLength(), Json.array(currentLineText));
+                                                
+                                                int endingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset() + e.getLength());
+                                                
+                                                connection.lines(currentFileName, currentDocument.getDefaultRootElement().getElementIndex(startingLineNumber), endingLineNumber - startingLineNumber, Json.array(currentLineText));
                                             } catch (BadLocationException ex) {
                                                 Exceptions.printStackTrace(ex);
                                             }
@@ -186,11 +189,12 @@ public class DocumentManipulator {
         }
     }
 
-    public synchronized void deleteText(String fileName, int startPosition, int deleteCount) {
+    public synchronized void deleteText(String fileName, int startPosition, int deleteCount, int lineIndex) {
         if (fileName.equals(currentFileName)) {
             shouldIgnoreUpdates = true;
             try {
-                currentDocument.remove(startPosition, deleteCount);
+                Element line = currentDocument.getDefaultRootElement().getElement(lineIndex);
+                currentDocument.remove(line.getStartOffset() + startPosition, deleteCount);
             } catch (BadLocationException ex) {
                 Exceptions.printStackTrace(ex);
             }
