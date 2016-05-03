@@ -161,6 +161,15 @@ public class DocumentManipulator {
         if (fileName.equals(currentFileName)) {
             shouldIgnoreUpdates = true;
             
+            //remove the first line, it will be replaced
+            Element firstLine = currentDocument.getDefaultRootElement().getElement(startLine);
+            try {
+                currentDocument.remove(firstLine.getStartOffset(), firstLine.getEndOffset());
+            } catch (BadLocationException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+            
+            
             String text = String.join("\n", lines); //System.getProperty("line.separator")
             try {
                 currentDocument.insertString(currentDocument.getDefaultRootElement().getElement(startLine).getStartOffset(), text, null);
