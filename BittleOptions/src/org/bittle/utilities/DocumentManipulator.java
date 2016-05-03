@@ -88,7 +88,7 @@ public class DocumentManipulator {
                                             //single-line insert
                                             String addedText = null;
                                             try {
-                                                addedText = currentDocument.getText(e.getOffset(), e.getLength());
+                                                addedText = currentDocument.getText(e.getOffset() - currentDocument.getDefaultRootElement().getElement(startingLineNumber).getStartOffset(), e.getLength());
                                             } catch (BadLocationException ex) {
                                                 Exceptions.printStackTrace(ex);
                                             }
