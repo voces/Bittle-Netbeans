@@ -180,7 +180,7 @@ public class DocumentManipulator {
             //insert lines
             String text = String.join(System.getProperty("line.separator"), lines) + (deleteCount == 0 ? "\n" : "");
             try {
-                currentDocument.insertString(currentDocument.getDefaultRootElement().getElement(startLine).getStartOffset(), text, null);
+                currentDocument.insertString(currentDocument.getDefaultRootElement().getElement(startLine).getStartOffset(), text + System.getProperty("line.separator"), null);
             } catch (BadLocationException ex) {
                 Exceptions.printStackTrace(ex);
             }
