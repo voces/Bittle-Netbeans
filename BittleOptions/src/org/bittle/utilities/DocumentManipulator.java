@@ -33,7 +33,7 @@ public class DocumentManipulator {
         return instance == null ? instance = new DocumentManipulator() : instance;
     }
     
-    DocumentManipulator() {
+    private DocumentManipulator() {
         connection = Connection.getInstance();
         
         //set up the document listener
@@ -80,12 +80,12 @@ public class DocumentManipulator {
                                        if (numberOfLines != currentNumberOfLines) {
                                             //multi-line insert, split lines and send as JSON array of strings
                                             numberOfLines = currentNumberOfLines;
-                                            String[] lines = addedText.split("(?<=\\r?\\n)"); //splits on \r or \n, and appends it to the end of the string if it's there
+                                            String[] lines = addedText.split("(\\r?\\n)"); //splits on \r or \n, and appends it to the end of the string if it's there
                                             
                                             connection.lines(currentFileName, e.getOffset(), 0, Json.array(lines));
                                         } else {
                                             //single-line insert
-                                            connection.line(currentFileName, startingLineNumber, e.getOffset(), 0, addedText);
+                                            connection.line(currentFileName, startingLineNumber, currentDocument.getDefaultRootElement().getElementIndex(e.getOffset()), 0, addedText);
                                         }
                                     }
                                 }
@@ -149,16 +149,16 @@ public class DocumentManipulator {
         }
     }
     
-    public synchronized void insertLines(String[] lines, String fileName, int startPosition) {
+    public synchronized void insertLines(String[] lines, String fileName, int startLine) {
+        Element currentLine = currentDocument.getDefaultRootElement().getElement(startLine);
         if (fileName.equals(currentFileName)) {
             shouldIgnoreUpdates = true;
-            for (String text : lines) {
-                try {
-                    currentDocument.insertString(startPosition, text, null);
-                } catch (BadLocationException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
-                startPosition += text.length();
+            
+            String text = String.join("\n", lines); //System.getProperty("line.separator")
+            try {
+                currentDocument.insertString(currentDocument.getDefaultRootElement().getElement(startLine).getStartOffset(), text, null);
+            } catch (BadLocationException ex) {
+                Exceptions.printStackTrace(ex);
             }
             shouldIgnoreUpdates = false;
         }

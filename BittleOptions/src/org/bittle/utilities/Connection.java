@@ -30,7 +30,7 @@ public class Connection {
     
     private static final Logger LOG = Log.getLogger(Connection.class);
     private static Session session = null;
-    private static boolean connected = false;
+    private static boolean isConnected = false;
     
     @OnWebSocketConnect
     public void onConnect(Session sess)
@@ -41,7 +41,7 @@ public class Connection {
     @OnWebSocketClose
     public void onClose(int statusCode, String reason)
     {
-        connected = false;
+        isConnected = false;
         
         BittleOptionsPanelController options = BittleOptionsPanelController.getInstance();
         
@@ -125,7 +125,7 @@ public class Connection {
     }
     
     public void connect(String url) {
-        if(connected)
+        if(isConnected)
             return;
         
         SslContextFactory sslContextFactory = new SslContextFactory();
@@ -138,7 +138,7 @@ public class Connection {
             Connection socket = new Connection();
             Future<Session> fut = client.connect(socket,URI.create(url));
             session = fut.get();
-            connected = true;
+            isConnected = true;
         }
         catch (Throwable t)
         {
@@ -150,7 +150,7 @@ public class Connection {
         if(session != null){
             BittleOptionsPanelController.getInstance().logOut();
             session.close();
-            connected = false;
+            isConnected = false;
         }
     }
     
