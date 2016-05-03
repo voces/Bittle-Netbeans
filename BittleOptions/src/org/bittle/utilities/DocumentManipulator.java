@@ -88,11 +88,11 @@ public class DocumentManipulator {
                                             //single-line insert
                                             String addedText = null;
                                             try {
-                                                addedText = currentDocument.getText(e.getOffset() - currentDocument.getDefaultRootElement().getElement(startingLineNumber).getStartOffset(), e.getLength());
+                                                addedText = currentDocument.getText(e.getOffset(), e.getLength());
                                             } catch (BadLocationException ex) {
                                                 Exceptions.printStackTrace(ex);
                                             }
-                                            connection.line(currentFileName, startingLineNumber, e.getOffset(), 0, addedText);
+                                            connection.line(currentFileName, startingLineNumber, e.getOffset() - currentDocument.getDefaultRootElement().getElement(startingLineNumber).getStartOffset(), 0, addedText);
                                         }
                                     }
                                 }
