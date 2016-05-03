@@ -75,9 +75,10 @@ public class DocumentManipulator {
                                         if (numberOfLines != currentNumberOfLines) {
                                             //multi-line insert, split lines and send as JSON array of strings
                                             int startingCharacterOffset = currentDocument.getDefaultRootElement().getElement(startingLineNumber).getStartOffset();
+                                            int endingCharacterOffset = currentDocument.getDefaultRootElement().getElement(endingLineNumber).getEndOffset();
                                             String text = null;
                                             try {
-                                                text = currentDocument.getText(startingCharacterOffset, e.getOffset() + e.getLength() - startingCharacterOffset);
+                                                text = currentDocument.getText(startingCharacterOffset, endingCharacterOffset - startingCharacterOffset);
                                             } catch (BadLocationException ex) {
                                                 Exceptions.printStackTrace(ex);
                                             }
@@ -122,7 +123,7 @@ public class DocumentManipulator {
                                             }
                                         } else {
                                             //single-line delete
-                                            connection.line(currentFileName, startingLineNumber, e.getOffset(), e.getLength(), "");
+                                            connection.line(currentFileName, startingLineNumber, e.getOffset() - currentDocument.getDefaultRootElement().getElement(startingLineNumber).getStartOffset(), e.getLength(), "");
                                         }
                                     }
                                 }
