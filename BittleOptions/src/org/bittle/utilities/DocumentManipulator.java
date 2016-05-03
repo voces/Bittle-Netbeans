@@ -81,7 +81,7 @@ public class DocumentManipulator {
                                                 Exceptions.printStackTrace(ex);
                                             }
                                             numberOfLines = currentNumberOfLines;
-                                            String[] lines = text.split("(\\r?\\n)"); //splits on \r or \n, and appends it to the end of the string if it's there
+                                            String[] lines = text.split("(\\r?\\n)", -1); //splits on \r \n
                                             
                                             connection.lines(currentFileName, e.getOffset(), 0, Json.array(lines));
                                         } else {
