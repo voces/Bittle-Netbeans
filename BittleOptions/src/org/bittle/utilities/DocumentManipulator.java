@@ -70,21 +70,28 @@ public class DocumentManipulator {
                                         //send message
                                         int startingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset());
                                         int endingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset() + e.getLength());
-                                        String addedText = null;
-                                        try {
-                                            addedText = currentDocument.getText(e.getOffset(), e.getLength());
-                                        } catch (BadLocationException ex) {
-                                            Exceptions.printStackTrace(ex);
-                                        }
                                         int currentNumberOfLines = currentDocument.getDefaultRootElement().getElementCount();
                                        if (numberOfLines != currentNumberOfLines) {
                                             //multi-line insert, split lines and send as JSON array of strings
+                                            int startingCharacterOffset = currentDocument.getDefaultRootElement().getElement(startingLineNumber).getStartOffset();
+                                            String text = null;
+                                            try {
+                                                text = currentDocument.getText(startingCharacterOffset, e.getOffset() + e.getLength() - startingCharacterOffset);
+                                            } catch (BadLocationException ex) {
+                                                Exceptions.printStackTrace(ex);
+                                            }
                                             numberOfLines = currentNumberOfLines;
-                                            String[] lines = addedText.split("(\\r?\\n)"); //splits on \r or \n, and appends it to the end of the string if it's there
+                                            String[] lines = text.split("(\\r?\\n)"); //splits on \r or \n, and appends it to the end of the string if it's there
                                             
                                             connection.lines(currentFileName, e.getOffset(), 0, Json.array(lines));
                                         } else {
                                             //single-line insert
+                                            String addedText = null;
+                                            try {
+                                                addedText = currentDocument.getText(e.getOffset(), e.getLength());
+                                            } catch (BadLocationException ex) {
+                                                Exceptions.printStackTrace(ex);
+                                            }
                                             connection.line(currentFileName, startingLineNumber, currentDocument.getDefaultRootElement().getElementIndex(e.getOffset()), 0, addedText);
                                         }
                                     }
