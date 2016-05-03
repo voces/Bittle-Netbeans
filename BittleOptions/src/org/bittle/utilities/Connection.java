@@ -180,69 +180,69 @@ public class Connection {
         sendMessage("{\"id\":\"changePass\", \"name\":\"" + name + "\", \"pass\":\"" + pass + "\", \"newPass\":\"" + newPass + "\"}");
     }
     
-    public void changeEmail(String name, String pass, String newEmail) {
-        sendMessage("{\"id\":\"changeEmail\", \"name\":\"" + name + "\", \"pass\":\"" + pass + "\", \"newEmail\":\"" + newEmail + "\"}");
-    }
+//    public void changeEmail(String name, String pass, String newEmail) {
+//        sendMessage("{\"id\":\"changeEmail\", \"name\":\"" + name + "\", \"pass\":\"" + pass + "\", \"newEmail\":\"" + newEmail + "\"}");
+//    }
     
-    public void createRepo(String name) {
-        sendMessage("{\"id\":\"createRepo\", \"name\":\"" + name + "\"}");
-    }
+//    public void createRepo(String name) {
+//        sendMessage("{\"id\":\"createRepo\", \"name\":\"" + name + "\"}");
+//    }
     
-    public void setPermission(String repo, String user, String role) {
-        sendMessage("{\"id\":\"setPermission\", \"repo\":\"" + repo + "\", \"user\":\"" + user + "\", \"role\":\"" + role + "\"}");
-    }
+//    public void setPermission(String repo, String user, String role) {
+//        sendMessage("{\"id\":\"setPermission\", \"repo\":\"" + repo + "\", \"user\":\"" + user + "\", \"role\":\"" + role + "\"}");
+//    }
     
-    public void deletePermission(String repo, String user) {
-        sendMessage("{\"id\":\"deletePermission\", \"repo\":\"" + repo + "\", \"user\":\"" + user + "\"}");
-    }
+//    public void deletePermission(String repo, String user) {
+//        sendMessage("{\"id\":\"deletePermission\", \"repo\":\"" + repo + "\", \"user\":\"" + user + "\"}");
+//    }
     
-    public void createFile(String repo, String file) {
-        sendMessage("{\"id\":\"createFile\", \"repo\":\"" + repo + "\", \"file\":\"" + file + "\"}");
-    }
+//    public void createFile(String repo, String file) {
+//        sendMessage("{\"id\":\"createFile\", \"repo\":\"" + repo + "\", \"file\":\"" + file + "\"}");
+//    }
     
-    public void moveFile(String repo, String file, String newPath) {
-        sendMessage("{\"id\":\"moveFile\", \"repo\":\"" + repo + "\", \"file\":\"" + file + "\", \"newPath\":\"" + newPath + "\"}");
-    }
+//    public void moveFile(String repo, String file, String newPath) {
+//        sendMessage("{\"id\":\"moveFile\", \"repo\":\"" + repo + "\", \"file\":\"" + file + "\", \"newPath\":\"" + newPath + "\"}");
+//    }
     
-    public void deleteFile(String repo, String file) {
-        sendMessage("{\"id\":\"deleteFile\", \"repo\":\"" + repo + "\", \"file\":\"" + file + "\"}");
-    }
+//    public void deleteFile(String repo, String file) {
+//        sendMessage("{\"id\":\"deleteFile\", \"repo\":\"" + repo + "\", \"file\":\"" + file + "\"}");
+//    }
     
-    public void createDirectory(String repo, String directory) {
-        sendMessage("{\"id\":\"createDirectory\", \"repo\":\"" + repo + "\", \"directory\":\"" + directory + "\"}");
-    }
+//    public void createDirectory(String repo, String directory) {
+//        sendMessage("{\"id\":\"createDirectory\", \"repo\":\"" + repo + "\", \"directory\":\"" + directory + "\"}");
+//    }
     
-    public void moveDirectory(String repo, String directory, String newPath) {
-        sendMessage("{\"id\":\"moveDirectory\", \"repo\":\"" + repo + "\", \"directory\":\"" + directory + "\", \"newPath\":\"" + newPath + "\"}");
-    }
+//    public void moveDirectory(String repo, String directory, String newPath) {
+//        sendMessage("{\"id\":\"moveDirectory\", \"repo\":\"" + repo + "\", \"directory\":\"" + directory + "\", \"newPath\":\"" + newPath + "\"}");
+//    }
     
-    public void deleteDirectory(String repo, String directory) {
-        sendMessage("{\"id\":\"deleteDirectory\", \"repo\":\"" + repo + "\", \"directory\":\"" + directory + "\"}");
-    }
+//    public void deleteDirectory(String repo, String directory) {
+//        sendMessage("{\"id\":\"deleteDirectory\", \"repo\":\"" + repo + "\", \"directory\":\"" + directory + "\"}");
+//    }
     
-    public void insert(String repo, String file, String lineId, String col, String data) {
-        sendMessage("{\"id\":\"insert\", \"repo\":\"" + repo + "\", \"file\":\"" + file + "\", \"lineId\":\"" + lineId + "\", \"col\": \"" + col + "\", \"data\":\"" + data + "\"}");
-    }
+//    public void insert(String repo, String file, String lineId, String col, String data) {
+//        sendMessage("{\"id\":\"insert\", \"repo\":\"" + repo + "\", \"file\":\"" + file + "\", \"lineId\":\"" + lineId + "\", \"col\": \"" + col + "\", \"data\":\"" + data + "\"}");
+//    }
     
-    public void getLine(String repo, String file, String lineId) {
-        sendMessage("{\"id\":\"getLine\", \"repo\":\"" + repo + "\", \"file\":\"" + file + "\", \"lineId\":\"" + lineId + "\"}");
-    }
+//    public void getLine(String repo, String file, String lineId) {
+//        sendMessage("{\"id\":\"getLine\", \"repo\":\"" + repo + "\", \"file\":\"" + file + "\", \"lineId\":\"" + lineId + "\"}");
+//    }
     
-    public void erase(String repo, String file, String lineId, String col, String count) {
-        sendMessage("{\"id\":\"erase\", \"repo\":\"" + repo + "\", \"file\":\"" + file + "\", \"lineId\":\"" + lineId + "\", \"col\": \"" + col + "\", \"count\":\"" + count + "\"}");
-    }
+//    public void erase(String repo, String file, String lineId, String col, String count) {
+//        sendMessage("{\"id\":\"erase\", \"repo\":\"" + repo + "\", \"file\":\"" + file + "\", \"lineId\":\"" + lineId + "\", \"col\": \"" + col + "\", \"count\":\"" + count + "\"}");
+//    }
     
-    public void split(String repo, String file, String lineId, String col, String newLineId) {
-        sendMessage("{\"id\":\"insert\", \"repo\":\"" + repo + "\", \"file\":\"" + file + "\", \"lineId\":\"" + lineId + "\", \"col\": \"" + col + "\", \"newLineId\":\"" + newLineId + "\"}");
-    }
+//    public void split(String repo, String file, String lineId, String col, String newLineId) {
+//        sendMessage("{\"id\":\"insert\", \"repo\":\"" + repo + "\", \"file\":\"" + file + "\", \"lineId\":\"" + lineId + "\", \"col\": \"" + col + "\", \"newLineId\":\"" + newLineId + "\"}");
+//    }
     
-    public void merge(String repo, String file, String lineId) {
-        sendMessage("{\"id\":\"merge\", \"repo\":\"" + repo + "\", \"file\":\"" + file + "\", \"lineId\":\"" + lineId + "\"}");
-    }
+//    public void merge(String repo, String file, String lineId) {
+//        sendMessage("{\"id\":\"merge\", \"repo\":\"" + repo + "\", \"file\":\"" + file + "\", \"lineId\":\"" + lineId + "\"}");
+//    }
     
-    public void getFile(String repo, String file) {
-        sendMessage("{\"id\":\"getFile\", \"repo\":\"" + repo + "\", \"file\":\"" + file + "\"}");
-    }
+//    public void getFile(String repo, String file) {
+//        sendMessage("{\"id\":\"getFile\", \"repo\":\"" + repo + "\", \"file\":\"" + file + "\"}");
+//    }
     
     public void clean() {
         sendMessage("{\"id\":\"clean\"}");

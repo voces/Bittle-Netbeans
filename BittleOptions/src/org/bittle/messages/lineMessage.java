@@ -34,7 +34,7 @@ public class lineMessage implements Message {
             if (deleteCount > 0)
                 DocumentManipulator.getInstance().deleteText(filename, start, deleteCount);
             else
-                DocumentManipulator.getInstance().insertText(line, filename, start);
+                DocumentManipulator.getInstance().insertText(line, filename, start, lineIndex);
         }
     }
     

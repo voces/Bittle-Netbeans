@@ -92,7 +92,7 @@ public class DocumentManipulator {
                                             } catch (BadLocationException ex) {
                                                 Exceptions.printStackTrace(ex);
                                             }
-                                            connection.line(currentFileName, startingLineNumber, currentDocument.getDefaultRootElement().getElementIndex(e.getOffset()), 0, addedText);
+                                            connection.line(currentFileName, startingLineNumber, e.getOffset(), 0, addedText);
                                         }
                                     }
                                 }
@@ -140,7 +140,7 @@ public class DocumentManipulator {
             EditorRegistry.removePropertyChangeListener(listener);
     }
     
-    public synchronized void insertText(String text, String fileName, int startPosition) {
+    public synchronized void insertText(String text, String fileName, int startPosition, int line) {
         //this should at some point check if the file is open in an editor,
         //if it is then change the opened file's editor
         //if not, then write to the file itself
@@ -148,7 +148,7 @@ public class DocumentManipulator {
         if (fileName.equals(currentFileName)) {
             shouldIgnoreUpdates = true;
             try {
-                currentDocument.insertString(startPosition, text, null);
+                currentDocument.insertString(currentDocument.getDefaultRootElement().getElement(line).getStartOffset() + startPosition, text, null);
             } catch (BadLocationException ex) {
                 Exceptions.printStackTrace(ex);
             }
