@@ -164,7 +164,7 @@ public class DocumentManipulator {
             //remove the first line, it will be replaced
             Element firstLine = currentDocument.getDefaultRootElement().getElement(startLine);
             try {
-                currentDocument.remove(firstLine.getStartOffset(), firstLine.getEndOffset());
+                currentDocument.remove(firstLine.getStartOffset(), firstLine.getEndOffset() - firstLine.getStartOffset());
             } catch (BadLocationException ex) {
                 Exceptions.printStackTrace(ex);
             }
