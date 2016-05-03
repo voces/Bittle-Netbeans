@@ -52,10 +52,7 @@ public class linesMessage implements Message {
             else
                 lines = new String[]{""};
             
-            if (deleteCount > 0)
-                DocumentManipulator.getInstance().deleteLines(lines, filename, start, deleteCount);
-            else
-                DocumentManipulator.getInstance().insertLines(lines, filename, start);
+            DocumentManipulator.getInstance().lines(lines, filename, start, deleteCount);
         }
     }
     

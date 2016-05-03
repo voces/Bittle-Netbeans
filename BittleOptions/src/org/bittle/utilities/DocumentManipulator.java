@@ -18,6 +18,7 @@ import org.openide.util.Exceptions;
 import org.openide.windows.TopComponent;
 
 public class DocumentManipulator {
+
     private Document currentDocument;
     private DocumentListener currentDocumentListener;
     private JTextComponent currentComponent;
@@ -26,16 +27,16 @@ public class DocumentManipulator {
     private PropertyChangeListener listener;
     private boolean shouldIgnoreUpdates = false;
     private int numberOfLines;
-    
+
     private static DocumentManipulator instance;
-    
+
     public static DocumentManipulator getInstance() {
         return instance == null ? instance = new DocumentManipulator() : instance;
     }
-    
+
     private DocumentManipulator() {
         connection = Connection.getInstance();
-        
+
         //set up the document listener
         listener = new PropertyChangeListener() {
             @Override
@@ -71,7 +72,7 @@ public class DocumentManipulator {
                                         int startingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset());
                                         int endingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset() + e.getLength());
                                         int currentNumberOfLines = currentDocument.getDefaultRootElement().getElementCount();
-                                       if (numberOfLines != currentNumberOfLines) {
+                                        if (numberOfLines != currentNumberOfLines) {
                                             //multi-line insert, split lines and send as JSON array of strings
                                             int startingCharacterOffset = currentDocument.getDefaultRootElement().getElement(startingLineNumber).getStartOffset();
                                             String text = null;
@@ -82,8 +83,8 @@ public class DocumentManipulator {
                                             }
                                             numberOfLines = currentNumberOfLines;
                                             String[] lines = text.split("(\\r?\\n)", -1); //splits on \r \n
-                                            
-                                            connection.lines(currentFileName, startingLineNumber, 0, Json.array(lines));
+
+                                            connection.lines(currentFileName, startingLineNumber, 1, Json.array(lines));
                                         } else {
                                             //single-line insert
                                             String addedText = null;
@@ -102,7 +103,7 @@ public class DocumentManipulator {
                                     if (!shouldIgnoreUpdates) {
                                         //e.offset is where the cursor ends up after the delete
                                         //e.length is the number of characters deleted (including newlines)
-                                        
+
                                         //send message
                                         int startingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset()); //line # of cursor after the delete
                                         int currentNumberOfLines = currentDocument.getDefaultRootElement().getElementCount();
@@ -134,12 +135,13 @@ public class DocumentManipulator {
 
         EditorRegistry.addPropertyChangeListener(listener);
     }
-    
+
     public void removeListener() {
-        if (listener != null)
+        if (listener != null) {
             EditorRegistry.removePropertyChangeListener(listener);
+        }
     }
-    
+
     public synchronized void insertText(String text, String fileName, int startPosition, int line) {
         //this should at some point check if the file is open in an editor,
         //if it is then change the opened file's editor
@@ -155,31 +157,34 @@ public class DocumentManipulator {
             shouldIgnoreUpdates = false;
         }
     }
-    
-    public synchronized void insertLines(String[] lines, String fileName, int startLine) {
+
+    public synchronized void lines(String[] lines, String fileName, int startLine, int deleteCount) {
         Element currentLine = currentDocument.getDefaultRootElement().getElement(startLine);
+        shouldIgnoreUpdates = true;
         if (fileName.equals(currentFileName)) {
-            shouldIgnoreUpdates = true;
-            
-            //remove the first line, it will be replaced
-            Element firstLine = currentDocument.getDefaultRootElement().getElement(startLine);
+            //delete whatever needs to be deleted
             try {
-                currentDocument.remove(firstLine.getStartOffset(), firstLine.getEndOffset() - firstLine.getStartOffset());
+                Element line;
+                for (int i = 0; i < deleteCount; i++) {
+                    line = currentDocument.getDefaultRootElement().getElement(startLine + i);
+                    currentDocument.remove(line.getStartOffset(), line.getEndOffset() - line.getStartOffset());
+                }
             } catch (BadLocationException ex) {
                 Exceptions.printStackTrace(ex);
             }
-            
-            
-            String text = String.join("\n", lines); //System.getProperty("line.separator")
+
+            //insert lines
+            String text = String.join(System.getProperty("line.separator"), lines) + (deleteCount == 0 ? "\n" : "");
             try {
                 currentDocument.insertString(currentDocument.getDefaultRootElement().getElement(startLine).getStartOffset(), text, null);
             } catch (BadLocationException ex) {
                 Exceptions.printStackTrace(ex);
             }
+
             shouldIgnoreUpdates = false;
         }
     }
-    
+
     public synchronized void deleteText(String fileName, int startPosition, int deleteCount) {
         if (fileName.equals(currentFileName)) {
             shouldIgnoreUpdates = true;
@@ -191,16 +196,16 @@ public class DocumentManipulator {
             shouldIgnoreUpdates = false;
         }
     }
-    
-    public synchronized void deleteLines(String[] lines, String fileName, int startPosition, int deleteCount) {
-        if (fileName.equals(currentFileName)) {
-            shouldIgnoreUpdates = true;
-                try {
-                    currentDocument.remove(startPosition, deleteCount);
-                } catch (BadLocationException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
-            shouldIgnoreUpdates = false;
-        }
-    }
+
+//    public synchronized void deleteLines(String[] lines, String fileName, int startPosition, int deleteCount) {
+//        if (fileName.equals(currentFileName)) {
+//            shouldIgnoreUpdates = true;
+//            try {
+//                currentDocument.remove(startPosition, deleteCount);
+//            } catch (BadLocationException ex) {
+//                Exceptions.printStackTrace(ex);
+//            }
+//            shouldIgnoreUpdates = false;
+//        }
+//    }
 }
