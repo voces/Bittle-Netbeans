@@ -83,7 +83,7 @@ public class DocumentManipulator {
                                             numberOfLines = currentNumberOfLines;
                                             String[] lines = text.split("(\\r?\\n)", -1); //splits on \r \n
                                             
-                                            connection.lines(currentFileName, e.getOffset(), 0, Json.array(lines));
+                                            connection.lines(currentFileName, startingLineNumber, 0, Json.array(lines));
                                         } else {
                                             //single-line insert
                                             String addedText = null;
