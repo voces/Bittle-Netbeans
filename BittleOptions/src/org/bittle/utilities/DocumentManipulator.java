@@ -115,12 +115,12 @@ public class DocumentManipulator {
                                             Element currentLine = currentDocument.getDefaultRootElement().getElement(startingLineNumber);
                                             String currentLineText;
                                             try {
-                                                currentLineText = currentDocument.getText(currentLine.getStartOffset(), currentLine.getElementCount());
+                                                currentLineText = currentDocument.getText(currentLine.getStartOffset(), currentLine.getEndOffset() - currentLine.getStartOffset());
                                                 currentLineText = currentLineText.replace("\n", ""); //strip the newline
                                                 
                                                 int endingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset() + e.getLength());
                                                 
-                                                connection.lines(currentFileName, currentDocument.getDefaultRootElement().getElementIndex(startingLineNumber), endingLineNumber - startingLineNumber, Json.array(currentLineText));
+                                                connection.lines(currentFileName, currentDocument.getDefaultRootElement().getElementIndex(e.getOffset()), endingLineNumber - startingLineNumber - 1, Json.array(currentLineText));
                                             } catch (BadLocationException ex) {
                                                 Exceptions.printStackTrace(ex);
                                             }
@@ -170,7 +170,7 @@ public class DocumentManipulator {
             try {
                 Element line;
                 for (int i = 0; i < deleteCount; i++) {
-                    line = currentDocument.getDefaultRootElement().getElement(startLine + i);
+                    line = currentDocument.getDefaultRootElement().getElement(startLine);
                     currentDocument.remove(line.getStartOffset(), line.getEndOffset() - line.getStartOffset());
                 }
             } catch (BadLocationException ex) {
