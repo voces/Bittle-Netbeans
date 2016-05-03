@@ -6,8 +6,11 @@ import java.beans.PropertyChangeListener;
 import java.nio.file.Paths;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.swing.text.DocumentFilter;
 import javax.swing.text.Element;
 import javax.swing.text.JTextComponent;
 import org.netbeans.api.editor.EditorRegistry;
@@ -27,6 +30,8 @@ public class DocumentManipulator {
     private PropertyChangeListener listener;
     private boolean shouldIgnoreUpdates = false;
     private int numberOfLines;
+    private int numberOfLinesBeingRemoved;
+    private DocumentFilter documentFilter;
 
     private static DocumentManipulator instance;
 
@@ -57,6 +62,43 @@ public class DocumentManipulator {
 
                         if (Share.getInstance().files.contains(currentFileName)) {
                             numberOfLines = currentDocument.getDefaultRootElement().getElementCount();
+                            
+                            //add DocumentFilter to catch text before it gets deleted, something Document alone cannot do
+                            ((AbstractDocument)currentDocument).setDocumentFilter(documentFilter = new DocumentFilter() {
+                                
+                                @Override
+                                public void remove(DocumentFilter.FilterBypass fb, int offset, int length) {
+                                    //needed for the removeUpdate
+                                    int startingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(offset);
+                                    int endingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(offset + length);
+                                    numberOfLinesBeingRemoved = endingLineNumber - startingLineNumber + 1; //+1 because if lines 1 through 3 are affected, then 3 lines total are affected
+                                    
+                                    //continue with the remove
+                                    try {
+                                        fb.remove(offset, length);
+                                    } catch (BadLocationException ex) {
+                                        Exceptions.printStackTrace(ex);
+                                    }
+                                }
+                                
+                                @Override
+                                public void replace(DocumentFilter.FilterBypass fb, int offset, int length, String text, AttributeSet attrs) {
+                                    //needed for the removeUpdate
+                                    int startingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(offset);
+                                    int endingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(offset + length);
+                                    numberOfLinesBeingRemoved = endingLineNumber - startingLineNumber + 1;
+                                    
+                                    //continue with the replace
+                                    try {
+                                        fb.replace(offset, length, text, null);
+                                    } catch (BadLocationException ex) {
+                                        Exceptions.printStackTrace(ex);
+                                    }
+                                    
+                                }
+                                
+                            });
+                            
                             //if the file is being shared, attach a listener to its document
                             currentDocument.addDocumentListener(currentDocumentListener = new DocumentListener() {
 
@@ -75,7 +117,7 @@ public class DocumentManipulator {
                                         if (numberOfLines != currentNumberOfLines) {
                                             //multi-line insert, split lines and send as JSON array of strings
                                             int startingCharacterOffset = currentDocument.getDefaultRootElement().getElement(startingLineNumber).getStartOffset();
-                                            int endingCharacterOffset = currentDocument.getDefaultRootElement().getElement(endingLineNumber).getEndOffset();
+                                            int endingCharacterOffset = currentDocument.getDefaultRootElement().getElement(endingLineNumber).getEndOffset() - 1; //-1, otherwise it goes too far
                                             String text = null;
                                             try {
                                                 text = currentDocument.getText(startingCharacterOffset, endingCharacterOffset - startingCharacterOffset);
@@ -83,7 +125,9 @@ public class DocumentManipulator {
                                                 Exceptions.printStackTrace(ex);
                                             }
                                             numberOfLines = currentNumberOfLines;
-                                            String[] lines = text.split(System.lineSeparator(), -1); //regex: "(\\r?\\n)", splits on \r \n
+                                            String[] lines = text.split("(\\r?\\n)", -1); //regex: "(\\r?\\n)", splits on \r \n
+                                            
+                                            
 
                                             connection.lines(currentFileName, startingLineNumber, 1, Json.array(lines));
                                         } else {
@@ -116,11 +160,11 @@ public class DocumentManipulator {
                                             String currentLineText;
                                             try {
                                                 currentLineText = currentDocument.getText(currentLine.getStartOffset(), currentLine.getEndOffset() - currentLine.getStartOffset());
-                                                currentLineText = currentLineText.replace(System.lineSeparator(), ""); //strip the newline
+                                                currentLineText = currentLineText.replace("\n", ""); //strip the newline
                                                 
                                                 int endingLineNumber = currentDocument.getDefaultRootElement().getElementIndex(e.getOffset() + e.getLength());
                                                 
-                                                connection.lines(currentFileName, currentDocument.getDefaultRootElement().getElementIndex(e.getOffset()), endingLineNumber - startingLineNumber - 1, Json.array(currentLineText));
+                                                connection.lines(currentFileName, currentDocument.getDefaultRootElement().getElementIndex(e.getOffset()), numberOfLinesBeingRemoved, Json.array(currentLineText));
                                             } catch (BadLocationException ex) {
                                                 Exceptions.printStackTrace(ex);
                                             }
