@@ -865,7 +865,7 @@ final class BittlePanel extends javax.swing.JPanel {
         int timer = 0;
                 
         while(waitingForResponse){
-            if(timer > 100)
+            if(timer > 300)
                 return false;
             
             try {
