@@ -37,11 +37,11 @@ import org.openide.windows.WindowManager;
 @TopComponent.Registration(mode = "explorer", openAtStartup = false)
 @ActionID(category = "Window", id = "org.bittle.beansmod.BittleTreeTopComponent")
 @ActionReferences({
-    @ActionReference(path = "Menu/Window"),
+    @ActionReference(path = "Menu/Window", position = 999999),
     @ActionReference(path = "Shortcuts", name = "D-B")
 })
 @TopComponent.OpenActionRegistration(
-        displayName = "BittleFiles",
+        displayName = "Bittle Files",
         preferredID = "BittleTree"
 )
 public final class BittleTreeTopComponent extends TopComponent {
